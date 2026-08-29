@@ -171,39 +171,36 @@ st.markdown("""
         color: var(--mdas-slate-900);
     }
 
-    /* --- Global Layout Overrides (No Horizontal Body Leak) --- */
-    .stApp {
-        overflow-x: hidden;
+    /* --- Direct Streamlit Column Overrides (Scrollable Right Pane) --- */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) {
+        max-height: 84vh !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        padding-right: 8px !important;
+        border-left: 1px solid var(--mdas-slate-border);
+        padding-left: 14px !important;
     }
-
-    /* --- Scrollable Command Palette Viewport --- */
-    .code-palette-pane {
-        max-height: 82vh;
-        overflow-y: auto;
-        overflow-x: auto;
-        padding-right: 6px;
-        padding-bottom: 8px;
-        border-radius: 6px;
-    }
-    .code-palette-pane::-webkit-scrollbar {
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2)::-webkit-scrollbar {
         width: 6px;
         height: 6px;
     }
-    .code-palette-pane::-webkit-scrollbar-track {
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2)::-webkit-scrollbar-track {
         background: rgba(100, 116, 139, 0.05);
         border-radius: 4px;
     }
-    .code-palette-pane::-webkit-scrollbar-thumb {
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2)::-webkit-scrollbar-thumb {
         background: rgba(100, 116, 139, 0.25);
         border-radius: 4px;
     }
-    .code-palette-pane::-webkit-scrollbar-thumb:hover {
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2)::-webkit-scrollbar-thumb:hover {
         background: rgba(100, 116, 139, 0.45);
     }
-    
-    .code-container {
-        border-left: 1px solid var(--mdas-slate-border);
-        padding-left: 16px;
+
+    [data-testid="stCodeBlock"] pre,
+    [data-testid="stCodeBlock"] code {
+        overflow-x: auto !important;
+        white-space: pre !important;
+        word-break: normal !important;
     }
 </style>
 """, unsafe_allow_html=True)

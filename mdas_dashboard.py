@@ -208,6 +208,31 @@ def render_dashboard():
             flex-direction: column;
             justify-content: center;
         }
+
+        /* ONLY horizontal slide scroll for code widgets. NO vertical scroll (expands naturally). */
+        [data-testid="stCodeBlock"] pre {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            white-space: pre !important;
+            word-break: normal !important;
+            word-wrap: normal !important;
+        }
+        [data-testid="stCodeBlock"] code {
+            white-space: pre !important;
+            word-break: normal !important;
+            word-wrap: normal !important;
+        }
+        [data-testid="stCodeBlock"] pre::-webkit-scrollbar {
+            height: 6px !important;
+        }
+        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-track {
+            background-color: rgba(100, 116, 139, 0.08) !important;
+            border-radius: 4px !important;
+        }
+        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb {
+            background-color: rgba(100, 116, 139, 0.35) !important;
+            border-radius: 4px !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -556,7 +581,7 @@ print("Churn Risk:        ", data["radar"]["churn_risk"])
 print("Primary Intent:    ", data["classification"]["intent"]["label"])
 print("Grammatical Voice: ", data["linguistics"]["voice"]["summary"])
 '''
-                st.code(python_sdk_code, language="python", line_numbers=True, height=480)
+                st.code(python_sdk_code, language="python", line_numbers=True)
 
             # 2. Keyless REST API
             with code_tab2:
@@ -582,7 +607,7 @@ payload = response.json()
 print("Urgency Score:", payload["radar"]["urgency"])
 print("Action Route: ", payload["classification"]["category"]["label"])
 '''
-                st.code(rest_code, language="python", line_numbers=True, height=480)
+                st.code(rest_code, language="python", line_numbers=True)
 
             # 3. App Pipeline Code
             with code_tab3:
@@ -623,7 +648,7 @@ class MDASAnalyzer:
         }
         return AnalysisResult(radar=radar, classification=classification, voice=voice)
 '''
-                st.code(pipeline_code, language="python", line_numbers=True, height=480)
+                st.code(pipeline_code, language="python", line_numbers=True)
 
             # 4. Output JSON (Clean, High-Signal Contract)
             with code_tab4:
@@ -671,7 +696,7 @@ class MDASAnalyzer:
                             "inference_latency_ms": round(latency_ms, 2)
                         }
                     }
-                    st.code(json.dumps(clean_contract, indent=2), language="json", height=480)
+                    st.code(json.dumps(clean_contract, indent=2), language="json")
                 else:
                     st.info("Run an analysis to inspect the live JSON response contract.")
 

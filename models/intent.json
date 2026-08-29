@@ -1,0 +1,215 @@
+{
+  "task": "intent",
+  "model_name": "TF-IDF + LogisticRegression",
+  "domain": "customer support intent",
+  "labels": [
+    "cancel_order",
+    "change_order",
+    "change_shipping_address",
+    "check_cancellation_fee",
+    "check_invoice",
+    "check_payment_methods",
+    "check_refund_policy",
+    "complaint",
+    "contact_customer_service",
+    "contact_human_agent",
+    "create_account",
+    "delete_account",
+    "delivery_options",
+    "delivery_period",
+    "edit_account",
+    "get_invoice",
+    "get_refund",
+    "newsletter_subscription",
+    "payment_issue",
+    "place_order",
+    "recover_password",
+    "registration_problems",
+    "review",
+    "set_up_shipping_address",
+    "switch_account",
+    "track_order",
+    "track_refund"
+  ],
+  "train_rows": 19708,
+  "test_rows": 4927,
+  "macro_f1": 0.98973,
+  "seed": 42,
+  "classification_report": {
+    "cancel_order": {
+      "precision": 0.95,
+      "recall": 0.9595959595959596,
+      "f1-score": 0.9547738693467337,
+      "support": 99.0
+    },
+    "change_order": {
+      "precision": 0.9767441860465116,
+      "recall": 0.9655172413793104,
+      "f1-score": 0.9710982658959537,
+      "support": 174.0
+    },
+    "change_shipping_address": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 195.0
+    },
+    "check_cancellation_fee": {
+      "precision": 0.9844559585492227,
+      "recall": 1.0,
+      "f1-score": 0.9921671018276762,
+      "support": 190.0
+    },
+    "check_invoice": {
+      "precision": 0.9633507853403142,
+      "recall": 1.0,
+      "f1-score": 0.9813333333333333,
+      "support": 184.0
+    },
+    "check_payment_methods": {
+      "precision": 1.0,
+      "recall": 0.995,
+      "f1-score": 0.9974937343358395,
+      "support": 200.0
+    },
+    "check_refund_policy": {
+      "precision": 1.0,
+      "recall": 0.9949748743718593,
+      "f1-score": 0.9974811083123426,
+      "support": 199.0
+    },
+    "complaint": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 200.0
+    },
+    "contact_customer_service": {
+      "precision": 1.0,
+      "recall": 0.985,
+      "f1-score": 0.9924433249370277,
+      "support": 200.0
+    },
+    "contact_human_agent": {
+      "precision": 0.9851485148514851,
+      "recall": 0.995,
+      "f1-score": 0.9900497512437811,
+      "support": 200.0
+    },
+    "create_account": {
+      "precision": 0.9885057471264368,
+      "recall": 0.9662921348314607,
+      "f1-score": 0.9772727272727273,
+      "support": 178.0
+    },
+    "delete_account": {
+      "precision": 0.9583333333333334,
+      "recall": 1.0,
+      "f1-score": 0.9787234042553191,
+      "support": 184.0
+    },
+    "delivery_options": {
+      "precision": 0.9924812030075187,
+      "recall": 1.0,
+      "f1-score": 0.9962264150943396,
+      "support": 132.0
+    },
+    "delivery_period": {
+      "precision": 0.9900990099009901,
+      "recall": 1.0,
+      "f1-score": 0.9950248756218906,
+      "support": 200.0
+    },
+    "edit_account": {
+      "precision": 0.9807692307692307,
+      "recall": 0.9870967741935484,
+      "f1-score": 0.9839228295819936,
+      "support": 155.0
+    },
+    "get_invoice": {
+      "precision": 1.0,
+      "recall": 0.9615384615384616,
+      "f1-score": 0.9803921568627451,
+      "support": 182.0
+    },
+    "get_refund": {
+      "precision": 0.9945652173913043,
+      "recall": 0.9945652173913043,
+      "f1-score": 0.9945652173913043,
+      "support": 184.0
+    },
+    "newsletter_subscription": {
+      "precision": 1.0,
+      "recall": 0.995,
+      "f1-score": 0.9974937343358395,
+      "support": 200.0
+    },
+    "payment_issue": {
+      "precision": 1.0,
+      "recall": 0.98,
+      "f1-score": 0.98989898989899,
+      "support": 200.0
+    },
+    "place_order": {
+      "precision": 0.9851485148514851,
+      "recall": 0.995,
+      "f1-score": 0.9900497512437811,
+      "support": 200.0
+    },
+    "recover_password": {
+      "precision": 0.995,
+      "recall": 1.0,
+      "f1-score": 0.9974937343358395,
+      "support": 199.0
+    },
+    "registration_problems": {
+      "precision": 0.9801980198019802,
+      "recall": 0.99,
+      "f1-score": 0.9850746268656716,
+      "support": 200.0
+    },
+    "review": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 199.0
+    },
+    "set_up_shipping_address": {
+      "precision": 1.0,
+      "recall": 0.9899497487437185,
+      "f1-score": 0.9949494949494949,
+      "support": 199.0
+    },
+    "switch_account": {
+      "precision": 1.0,
+      "recall": 0.9883720930232558,
+      "f1-score": 0.9941520467836257,
+      "support": 172.0
+    },
+    "track_order": {
+      "precision": 1.0,
+      "recall": 0.9813664596273292,
+      "f1-score": 0.9905956112852664,
+      "support": 161.0
+    },
+    "track_refund": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 141.0
+    },
+    "accuracy": 0.9904607266084838,
+    "macro avg": {
+      "precision": 0.9898073970729561,
+      "recall": 0.9897877394331928,
+      "f1-score": 0.9897287446300561,
+      "support": 4927.0
+    },
+    "weighted avg": {
+      "precision": 0.9906118495571979,
+      "recall": 0.9904607266084838,
+      "f1-score": 0.990467320908917,
+      "support": 4927.0
+    }
+  }
+}

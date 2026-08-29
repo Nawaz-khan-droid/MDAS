@@ -1,0 +1,47 @@
+{
+  "task": "sentiment",
+  "model_name": "TF-IDF + LogisticRegression",
+  "domain": "Twitter US airline sentiment",
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "train_rows": 1197,
+  "test_rows": 300,
+  "macro_f1": 0.66782,
+  "seed": 42,
+  "classification_report": {
+    "negative": {
+      "precision": 0.8784530386740331,
+      "recall": 0.8932584269662921,
+      "f1-score": 0.8857938718662952,
+      "support": 178.0
+    },
+    "neutral": {
+      "precision": 0.5483870967741935,
+      "recall": 0.5,
+      "f1-score": 0.5230769230769231,
+      "support": 68.0
+    },
+    "positive": {
+      "precision": 0.5789473684210527,
+      "recall": 0.6111111111111112,
+      "f1-score": 0.5945945945945946,
+      "support": 54.0
+    },
+    "accuracy": 0.7533333333333333,
+    "macro avg": {
+      "precision": 0.6685958346230931,
+      "recall": 0.6681231793591343,
+      "f1-score": 0.6678217965126043,
+      "support": 300.0
+    },
+    "weighted avg": {
+      "precision": 0.7497270711978663,
+      "recall": 0.7533333333333333,
+      "f1-score": 0.751162160231798,
+      "support": 300.0
+    }
+  }
+}

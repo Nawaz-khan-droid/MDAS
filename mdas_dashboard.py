@@ -188,33 +188,56 @@ def render_dashboard():
         /* --- Fixed, independently-scrollable code/tab panel --- */
         .stTabs [data-baseweb="tab-panel"] {
             max-height: 620px;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
             padding-right: 6px;
+            padding-bottom: 8px;
         }
 
-        /* Code blocks: horizontal scroll for long lines, capped height */
+        /* Code blocks: full horizontal side-scrolling for long lines + vertical ceiling */
+        [data-testid="stCodeBlock"] {
+            max-height: 560px !important;
+            overflow: auto !important;
+            border-radius: 6px !important;
+        }
         [data-testid="stCodeBlock"] pre {
             overflow-x: auto !important;
+            overflow-y: auto !important;
             white-space: pre !important;
+            word-break: normal !important;
+            word-wrap: normal !important;
+            min-width: 100% !important;
+            width: max-content !important;
         }
-        [data-testid="stCodeBlock"] {
-            max-height: 560px;
-            overflow-y: auto;
+        [data-testid="stCodeBlock"] code {
+            white-space: pre !important;
+            word-break: normal !important;
+            word-wrap: normal !important;
         }
 
-        /* Thin, unobtrusive scrollbars matching slate palette */
+        /* Visible, sleek scrollbars (horizontal & vertical) matching slate palette */
         .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar,
         [data-testid="stCodeBlock"]::-webkit-scrollbar,
         [data-testid="stCodeBlock"] pre::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 6px !important;
+            height: 6px !important;
+        }
+        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-track,
+        [data-testid="stCodeBlock"]::-webkit-scrollbar-track,
+        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-track {
+            background-color: rgba(100, 116, 139, 0.08) !important;
+            border-radius: 4px !important;
         }
         .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-thumb,
         [data-testid="stCodeBlock"]::-webkit-scrollbar-thumb,
         [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb {
-            background-color: var(--mdas-slate-border);
-            border-radius: 4px;
+            background-color: rgba(100, 116, 139, 0.35) !important;
+            border-radius: 4px !important;
+        }
+        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-thumb:hover,
+        [data-testid="stCodeBlock"]::-webkit-scrollbar-thumb:hover,
+        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(100, 116, 139, 0.6) !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -633,10 +656,53 @@ class MDASAnalyzer:
 '''
                 st.code(pipeline_code, language="python", line_numbers=True)
 
-            # 4. Output JSON
+            # 4. Output JSON (Clean, High-Signal Contract)
             with code_tab4:
                 if res_dict:
-                    st.code(json.dumps(res_dict, indent=2), language="json")
+                    clean_contract = {
+                        "radar": radar,
+                        "classification": {
+                            k: {
+                                "label": v.get("label"),
+                                "confidence": round(v.get("confidence", 0.0), 3) if v.get("confidence") is not None else None,
+                                "alternatives": {alt_k: round(alt_v, 3) for alt_k, alt_v in v.get("alternatives", {}).items()} if isinstance(v.get("alternatives"), dict) else v.get("alternatives")
+                            }
+                            for k, v in classification.items()
+                            if v.get("status") == "ok" and v.get("label") is not None
+                        },
+                        "signals": {
+                            k: {
+                                "score": round(v.get("score", 0.0), 3),
+                                "label": v.get("label"),
+                                "evidence_count": v.get("evidence_count", 0) if "evidence_count" in v else v.get("marker_count", 0)
+                            }
+                            for k, v in signals.items()
+                        },
+                        "voice": {
+                            "summary": ling.get("voice", {}).get("summary"),
+                            "sentences": [
+                                {
+                                    "text": s.get("text"),
+                                    "voice": s.get("voice"),
+                                    "subject": s.get("subject"),
+                                    "verb": s.get("verb"),
+                                    "confidence": s.get("confidence")
+                                }
+                                for s in ling.get("voice", {}).get("sentences", [])
+                            ]
+                        },
+                        "entities": [
+                            {"text": e.get("text"), "label": e.get("label")}
+                            for e in ling.get("entities", [])
+                        ],
+                        "statistics": {
+                            "words": stats.get("words"),
+                            "sentences": stats.get("sentences"),
+                            "lexical_diversity": stats.get("lexical_diversity"),
+                            "inference_latency_ms": round(latency_ms, 2)
+                        }
+                    }
+                    st.code(json.dumps(clean_contract, indent=2), language="json")
                 else:
                     st.info("Run an analysis to inspect the live JSON response contract.")
 

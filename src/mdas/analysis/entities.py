@@ -4,8 +4,9 @@ from mdas.core.types import Entity
 PATTERNS = {
     "EMAIL": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I),
     "PHONE": re.compile(r"(?<!\d)(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{3}\)?[-.\s])\d{3}[-.\s]\d{4}(?!\d)"),
-    "ORDER_ID": re.compile(r"\b(?:order|ord)\s*(?:id|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9_-]{2,})\b", re.I),
+    "ORDER_ID": re.compile(r"\b(?:order|ord|ticket|inv|invoice)\s*(?:id|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9_-]{2,})\b", re.I),
     "TRANSACTION_ID": re.compile(r"\b(?:transaction|trans|txn)\s*(?:id|#)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9_-]{2,})\b", re.I),
+    "URL": re.compile(r"\bhttps?://[^\s/$.?#].[^\s]*\b", re.I),
 }
 
 def extract_entities(doc):

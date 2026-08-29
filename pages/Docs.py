@@ -7,20 +7,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.sidebar.title("🧭 MDAS Controls")
-st.sidebar.markdown("### 📚 Navigation")
-st.sidebar.page_link("mdas_dashboard.py", label="Operational Radar", icon="🧭")
-st.sidebar.page_link("pages/1_📖_Docs.py", label="Documentation & Specs", icon="📖")
-st.sidebar.page_link("pages/2_⚙️_Settings.py", label="Keyless API & Settings", icon="⚙️")
-
-st.title("📖 MDAS System Documentation & Specifications")
+st.title("MDAS System Documentation & Specifications")
 st.caption("Multi-Dimensional Text Analysis System • Architectural Reference Manual")
 
 doc_tab1, doc_tab2, doc_tab3, doc_tab4 = st.tabs([
-    "🏗️ Architecture & Philosophy", 
-    "📊 The 5-Axis Radar", 
-    "🤖 Machine Learning Models", 
-    "🔍 Linguistics & Voice Engine"
+    "Architecture & Philosophy", 
+    "5-Axis Radar Standards", 
+    "Machine Learning Models", 
+    "Linguistics & Voice Engine"
 ])
 
 with doc_tab1:
@@ -65,7 +59,9 @@ with doc_tab2:
     | **Sarcasm** | `sarcasm` | Literal Communication | Sarcastic Dissatisfaction / Mockery |
     
     #### Automated Dispatch Thresholds
-    - **Urgency $\ge 0.67$ or Churn $\ge 0.85$**: Triggers **Critical Dispatch** to Senior Engineering & Retention Queues.
+    - **Urgency $\ge 0.67$ and Churn $\ge 0.70$**: Triggers **Critical Dispatch** to Senior Engineering SRE & Retention Taskforce.
+    - **Urgency $\ge 0.67$**: Triggers **Critical Dispatch** to On-Call SRE Incident Response.
+    - **Churn Risk $\ge 0.70$**: Triggers **Retention Review** for Customer Success intervention.
     - **Toxicity $\ge 0.50$**: Triggers **Content Moderation Review** for employee well-being.
     - **Urgency $\ge 0.34$**: Routes to **Tier-2 Specialized Support**.
     - **Otherwise**: Enters **Routine Automated Processing**.
@@ -93,7 +89,7 @@ with doc_tab4:
     
     Powered by `spaCy`, MDAS performs comprehensive grammatical parse-tree inspection:
     
-    - **Grammatical Voice Detection**: Evaluates passive auxiliaries (`aux:pass`), passive subjects (`nsubj:pass`), and agent markers to classify each sentence as **Active**, **Passive**, or **Uncertain**.
-    - **Named Entity Recognition (NER)**: Extracts organizations (`ORG`), monetary amounts (`MONEY`), dates (`DATE`), locations (`GPE`), and people (`PERSON`).
+    - **Grammatical Voice Detection**: Distinguishes **Active**, **Active (Imperative)**, and **Passive** voice based on auxiliary verbs (`aux:pass`, `auxpass`, BE+VBN participles), passive subjects (`nsubj:pass`), and imperative mood roots.
+    - **Named Entity Recognition (NER)**: Extracts organizations (`ORG`), monetary amounts (`MONEY`), dates (`DATE`), locations (`GPE`), people (`PERSON`), URLs, and identifiers (`ORDER_ID`, `TRANSACTION_ID`).
     - **Lexical Complexity**: Computes Type-Token Ratio (TTR) lexical diversity, average words per sentence, and root lemma distributions.
     """)

@@ -185,59 +185,28 @@ def render_dashboard():
             padding: 10px 16px !important;
         }
 
-        /* --- Fixed, independently-scrollable code/tab panel --- */
+        /* Tab panel: visual height cap only — NOT a scroll container.
+           overflow left as visible so the code widget's own scrollbars
+           (vertical + horizontal, both native) are never clipped. */
         .stTabs [data-baseweb="tab-panel"] {
-            max-height: 620px;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
-            padding-right: 6px;
-            padding-bottom: 8px;
+            overflow: visible;
         }
 
-        /* Code blocks: full horizontal side-scrolling for long lines + vertical ceiling */
-        [data-testid="stCodeBlock"] {
-            max-height: 560px !important;
-            overflow: auto !important;
-            border-radius: 6px !important;
-        }
-        [data-testid="stCodeBlock"] pre {
-            overflow-x: auto !important;
-            overflow-y: auto !important;
-            white-space: pre !important;
-            word-break: normal !important;
-            word-wrap: normal !important;
-            min-width: 100% !important;
-            width: max-content !important;
-        }
-        [data-testid="stCodeBlock"] code {
-            white-space: pre !important;
-            word-break: normal !important;
-            word-wrap: normal !important;
+        /* Force KPI text to wrap instead of ellipsis-truncating if a
+           label is ever longer than the card at narrow widths */
+        .kpi-eyebrow, .kpi-value, .kpi-sub {
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: unset !important;
+            word-break: break-word;
         }
 
-        /* Visible, sleek scrollbars (horizontal & vertical) matching slate palette */
-        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar,
-        [data-testid="stCodeBlock"]::-webkit-scrollbar,
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar {
-            width: 6px !important;
-            height: 6px !important;
-        }
-        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-track,
-        [data-testid="stCodeBlock"]::-webkit-scrollbar-track,
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-track {
-            background-color: rgba(100, 116, 139, 0.08) !important;
-            border-radius: 4px !important;
-        }
-        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-thumb,
-        [data-testid="stCodeBlock"]::-webkit-scrollbar-thumb,
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb {
-            background-color: rgba(100, 116, 139, 0.35) !important;
-            border-radius: 4px !important;
-        }
-        .stTabs [data-baseweb="tab-panel"]::-webkit-scrollbar-thumb:hover,
-        [data-testid="stCodeBlock"]::-webkit-scrollbar-thumb:hover,
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(100, 116, 139, 0.6) !important;
+        /* Equal-height cards regardless of value/label length */
+        .kpi-card {
+            min-height: 92px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -372,22 +341,22 @@ def render_dashboard():
                     <div class="kpi-sub">Polarity {sentiment_score:.2f}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-eyebrow">Primary Intent</div>
+                    <div class="kpi-eyebrow">Intent</div>
                     <div class="kpi-value">{intent_label}</div>
                     <div class="kpi-sub">Model-classified</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-eyebrow">Category Domain</div>
+                    <div class="kpi-eyebrow">Category</div>
                     <div class="kpi-value">{cat_label}</div>
                     <div class="kpi-sub">Routing vertical</div>
                 </div>
                 <div class="kpi-card {spam_risk}">
-                    <div class="kpi-eyebrow">Security Filter</div>
+                    <div class="kpi-eyebrow">Security</div>
                     <div class="kpi-value">{'Spam' if is_spam else 'Authentic'}</div>
                     <div class="kpi-sub">{'Flagged payload' if is_spam else 'Verified clean'}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-eyebrow">Inference Time</div>
+                    <div class="kpi-eyebrow">Latency</div>
                     <div class="kpi-value">{latency_ms:.2f} ms</div>
                     <div class="kpi-sub">Local CPU</div>
                 </div>
@@ -587,7 +556,7 @@ print("Churn Risk:        ", data["radar"]["churn_risk"])
 print("Primary Intent:    ", data["classification"]["intent"]["label"])
 print("Grammatical Voice: ", data["linguistics"]["voice"]["summary"])
 '''
-                st.code(python_sdk_code, language="python", line_numbers=True)
+                st.code(python_sdk_code, language="python", line_numbers=True, height=480)
 
             # 2. Keyless REST API
             with code_tab2:
@@ -613,7 +582,7 @@ payload = response.json()
 print("Urgency Score:", payload["radar"]["urgency"])
 print("Action Route: ", payload["classification"]["category"]["label"])
 '''
-                st.code(rest_code, language="python", line_numbers=True)
+                st.code(rest_code, language="python", line_numbers=True, height=480)
 
             # 3. App Pipeline Code
             with code_tab3:
@@ -654,7 +623,7 @@ class MDASAnalyzer:
         }
         return AnalysisResult(radar=radar, classification=classification, voice=voice)
 '''
-                st.code(pipeline_code, language="python", line_numbers=True)
+                st.code(pipeline_code, language="python", line_numbers=True, height=480)
 
             # 4. Output JSON (Clean, High-Signal Contract)
             with code_tab4:
@@ -702,7 +671,7 @@ class MDASAnalyzer:
                             "inference_latency_ms": round(latency_ms, 2)
                         }
                     }
-                    st.code(json.dumps(clean_contract, indent=2), language="json")
+                    st.code(json.dumps(clean_contract, indent=2), language="json", height=480)
                 else:
                     st.info("Run an analysis to inspect the live JSON response contract.")
 

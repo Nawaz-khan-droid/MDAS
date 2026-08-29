@@ -54,14 +54,27 @@ st.markdown("""
         letter-spacing: 0.3px;
     }
 
-    /* --- KPI Card v2: hierarchy-first --- */
+    /* --- KPI Grid: Single Flexbox Container (Symmetric & Equal Sizes) --- */
+    .kpi-grid {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+        margin-top: 8px;
+        margin-bottom: 14px;
+    }
     .kpi-card {
+        flex: 1 1 0px;
+        min-width: 0;
         background-color: var(--mdas-surface);
         border: 1px solid var(--mdas-slate-border);
         border-top: 3px solid transparent;   /* becomes colored only for signal cards */
         border-radius: 6px;
-        padding: 14px 12px 12px 12px;
+        padding: 10px 10px 8px 10px;
         text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     .kpi-card.risk-safe     { border-top-color: var(--mdas-safe); }
@@ -69,24 +82,33 @@ st.markdown("""
     .kpi-card.risk-critical { border-top-color: var(--mdas-critical); }
 
     .kpi-eyebrow {
-        font-size: 0.66rem;
+        font-size: 0.62rem;
         text-transform: uppercase;
         font-weight: 650;
-        letter-spacing: 0.6px;
+        letter-spacing: 0.5px;
         color: var(--mdas-slate-400);
-        margin-bottom: 6px;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .kpi-value {
-        font-size: 1.55rem;
+        font-size: 1.15rem;
         font-weight: 650;
         color: var(--mdas-slate-900);
-        line-height: 1.1;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .kpi-sub {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 500;
         color: var(--mdas-slate-400);
-        margin-top: 3px;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* --- Action banners --- */
@@ -285,55 +307,40 @@ with col_preview:
 
         st.write("")
 
-        # Hierarchy-First KPI Cards v2
-        kpi_cols = st.columns(5)
-
-        with kpi_cols[0]:
-            sent_risk = "risk-safe" if sentiment_label == "Positive" else "risk-critical" if sentiment_label == "Negative" else ""
-            st.markdown(f"""
+        # Hierarchy-First KPI Cards v2 (Unified Flexbox Grid)
+        sent_risk = "risk-safe" if sentiment_label == "Positive" else "risk-critical" if sentiment_label == "Negative" else ""
+        is_spam = spam_label.lower() == "spam"
+        spam_risk = "risk-critical" if is_spam else "risk-safe"
+        
+        st.markdown(f"""
+        <div class="kpi-grid">
             <div class="kpi-card {sent_risk}">
                 <div class="kpi-eyebrow">Sentiment</div>
                 <div class="kpi-value">{sentiment_label}</div>
-                <div class="kpi-sub">Polarity score {sentiment_score:.2f}</div>
+                <div class="kpi-sub">Polarity {sentiment_score:.2f}</div>
             </div>
-            """, unsafe_allow_html=True)
-
-        with kpi_cols[1]:
-            st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-eyebrow">Primary Intent</div>
                 <div class="kpi-value">{intent_label}</div>
                 <div class="kpi-sub">Model-classified</div>
             </div>
-            """, unsafe_allow_html=True)
-
-        with kpi_cols[2]:
-            st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-eyebrow">Category Domain</div>
                 <div class="kpi-value">{cat_label}</div>
                 <div class="kpi-sub">Routing vertical</div>
             </div>
-            """, unsafe_allow_html=True)
-
-        with kpi_cols[3]:
-            is_spam = spam_label.lower() == "spam"
-            st.markdown(f"""
-            <div class="kpi-card {'risk-critical' if is_spam else 'risk-safe'}">
+            <div class="kpi-card {spam_risk}">
                 <div class="kpi-eyebrow">Security Filter</div>
                 <div class="kpi-value">{'Spam' if is_spam else 'Authentic'}</div>
                 <div class="kpi-sub">{'Flagged payload' if is_spam else 'Verified clean'}</div>
             </div>
-            """, unsafe_allow_html=True)
-
-        with kpi_cols[4]:
-            st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-eyebrow">Inference Time</div>
                 <div class="kpi-value">{latency_ms:.2f} ms</div>
-                <div class="kpi-sub">Local CPU inference</div>
+                <div class="kpi-sub">Local CPU</div>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
         # Operational Action Dispatch Banner
         if urgency_score >= 0.67 or churn_score >= 0.85:

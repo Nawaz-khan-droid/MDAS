@@ -171,6 +171,36 @@ st.markdown("""
         color: var(--mdas-slate-900);
     }
 
+    /* --- Global Layout Overrides (No Horizontal Body Leak) --- */
+    .stApp {
+        overflow-x: hidden;
+    }
+
+    /* --- Scrollable Command Palette Viewport --- */
+    .code-palette-pane {
+        max-height: 82vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        padding-right: 6px;
+        padding-bottom: 8px;
+        border-radius: 6px;
+    }
+    .code-palette-pane::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .code-palette-pane::-webkit-scrollbar-track {
+        background: rgba(100, 116, 139, 0.05);
+        border-radius: 4px;
+    }
+    .code-palette-pane::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.25);
+        border-radius: 4px;
+    }
+    .code-palette-pane::-webkit-scrollbar-thumb:hover {
+        background: rgba(100, 116, 139, 0.45);
+    }
+    
     .code-container {
         border-left: 1px solid var(--mdas-slate-border);
         padding-left: 16px;
@@ -220,7 +250,7 @@ top_left, top_right = st.columns([1.1, 1] if show_code_pane and split_ratio != "
 with top_left:
     st.markdown("""
     <div class="top-bar">
-        <div class="pane-title">Interactive Telemetry Preview</div>
+        <div class="pane-title">Preview</div>
         <div class="status-badge">Engine Online (v0.1.0)</div>
     </div>
     """, unsafe_allow_html=True)
@@ -229,8 +259,8 @@ if show_code_pane and split_ratio != "Preview Only":
     with top_right:
         st.markdown("""
         <div class="top-bar">
-            <div class="pane-title">Code & Integration Palette</div>
-            <div style="font-size: 0.76rem; color: var(--mdas-slate-400); font-weight: 550;">PYTHON • REST • CONTRACTS</div>
+            <div class="pane-title">Command Palette</div>
+            <div style="font-size: 0.74rem; color: var(--mdas-slate-400); font-weight: 550;">PYTHON • REST • CONTRACTS</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -482,12 +512,11 @@ with col_preview:
         input_text = ""
 
 # ==========================================
-# RIGHT PANE: CODE & INTEGRATION PALETTE
+# RIGHT PANE: COMMAND PALETTE
 # ==========================================
 if col_code:
     with col_code:
-        st.markdown("### 📄 Code & Integration Palette")
-        st.caption("Interactive developer view replicating the Mesop code workspace.")
+        st.markdown("<div class='code-palette-pane'>", unsafe_allow_html=True)
 
         code_tab1, code_tab2, code_tab3, code_tab4 = st.tabs([
             "🐍 Python Client", 
@@ -593,3 +622,5 @@ class MDASAnalyzer:
                 st.code(json.dumps(res_dict, indent=2), language="json")
             else:
                 st.info("Run an analysis to inspect the live JSON response contract.")
+
+        st.markdown("</div>", unsafe_allow_html=True)

@@ -185,13 +185,6 @@ def render_dashboard():
             padding: 10px 16px !important;
         }
 
-        /* Tab panel: visual height cap only — NOT a scroll container.
-           overflow left as visible so the code widget's own scrollbars
-           (vertical + horizontal, both native) are never clipped. */
-        .stTabs [data-baseweb="tab-panel"] {
-            overflow: visible;
-        }
-
         /* Force KPI text to wrap instead of ellipsis-truncating if a
            label is ever longer than the card at narrow widths */
         .kpi-eyebrow, .kpi-value, .kpi-sub {
@@ -207,31 +200,6 @@ def render_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-        }
-
-        /* ONLY horizontal slide scroll for code widgets. NO vertical scroll (expands naturally). */
-        [data-testid="stCodeBlock"] pre {
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            white-space: pre !important;
-            word-break: normal !important;
-            word-wrap: normal !important;
-        }
-        [data-testid="stCodeBlock"] code {
-            white-space: pre !important;
-            word-break: normal !important;
-            word-wrap: normal !important;
-        }
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar {
-            height: 6px !important;
-        }
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-track {
-            background-color: rgba(100, 116, 139, 0.08) !important;
-            border-radius: 4px !important;
-        }
-        [data-testid="stCodeBlock"] pre::-webkit-scrollbar-thumb {
-            background-color: rgba(100, 116, 139, 0.35) !important;
-            border-radius: 4px !important;
         }
     </style>
     """, unsafe_allow_html=True)

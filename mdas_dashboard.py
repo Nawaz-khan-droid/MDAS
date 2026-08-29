@@ -13,102 +13,144 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --- Theme-Adaptive CSS & Material-Mesop Styling ---
+# --- Theme-Adaptive CSS & Design Token System ---
 st.markdown("""
 <style>
-    /* Top Bar */
+    :root {
+        --mdas-slate-900: #1e293b;
+        --mdas-slate-600: #475569;
+        --mdas-slate-400: #94a3b8;
+        --mdas-slate-border: rgba(100, 116, 139, 0.18);
+        --mdas-surface: var(--secondary-background-color);
+        --mdas-safe: #059669;        /* emerald, 0.0 baseline */
+        --mdas-caution: #d97706;     /* amber, mid-risk */
+        --mdas-critical: #b91c1c;    /* muted crimson, >0.75 */
+        --mdas-accent: #334155;      /* neutral structural accent */
+    }
+
     .top-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-        padding-bottom: 8px;
-        margin-bottom: 16px;
+        border-bottom: 1px solid var(--mdas-slate-border);
+        padding-bottom: 10px;
+        margin-bottom: 18px;
     }
     .pane-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: 0.8px;
+        font-size: 0.82rem;
+        font-weight: 650;
+        letter-spacing: 1.1px;
         text-transform: uppercase;
-        color: var(--text-color);
-        opacity: 0.8;
+        color: var(--mdas-slate-600);
     }
     .status-badge {
-        background-color: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        padding: 4px 10px;
-        border-radius: 12px;
+        background-color: rgba(5, 150, 105, 0.10);
+        color: var(--mdas-safe);
+        border: 1px solid rgba(5, 150, 105, 0.25);
+        padding: 3px 10px;
+        border-radius: 4px;
         font-weight: 600;
-        font-size: 0.78rem;
-    }
-    
-    /* Symmetric Metric Card */
-    .kpi-card {
-        background-color: var(--secondary-background-color);
-        border: 1px solid rgba(128, 128, 128, 0.18);
-        border-radius: 8px;
-        padding: 12px 10px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    .kpi-title {
         font-size: 0.72rem;
-        text-transform: uppercase;
-        font-weight: 600;
-        opacity: 0.65;
-        margin-bottom: 4px;
-        letter-spacing: 0.5px;
-    }
-    .kpi-value {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: var(--text-color);
+        letter-spacing: 0.3px;
     }
 
-    /* Action Alerts */
+    /* --- KPI Card v2: hierarchy-first --- */
+    .kpi-card {
+        background-color: var(--mdas-surface);
+        border: 1px solid var(--mdas-slate-border);
+        border-top: 3px solid transparent;   /* becomes colored only for signal cards */
+        border-radius: 6px;
+        padding: 14px 12px 12px 12px;
+        text-align: left;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .kpi-card.risk-safe     { border-top-color: var(--mdas-safe); }
+    .kpi-card.risk-caution  { border-top-color: var(--mdas-caution); }
+    .kpi-card.risk-critical { border-top-color: var(--mdas-critical); }
+
+    .kpi-eyebrow {
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        font-weight: 650;
+        letter-spacing: 0.6px;
+        color: var(--mdas-slate-400);
+        margin-bottom: 6px;
+    }
+    .kpi-value {
+        font-size: 1.55rem;
+        font-weight: 650;
+        color: var(--mdas-slate-900);
+        line-height: 1.1;
+    }
+    .kpi-sub {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--mdas-slate-400);
+        margin-top: 3px;
+    }
+
+    /* --- Action banners --- */
     .action-box {
         padding: 14px 16px;
-        border-radius: 8px;
+        border-radius: 6px;
         margin-top: 14px;
         margin-bottom: 14px;
         font-weight: 500;
         display: flex;
         align-items: flex-start;
         gap: 12px;
-        font-size: 0.92rem;
+        font-size: 0.88rem;
+        border: 1px solid var(--mdas-slate-border);
     }
-    .action-critical {
-        background-color: rgba(239, 68, 68, 0.12);
-        border-left: 4px solid #ef4444;
-        color: #ef4444;
-    }
-    .action-warning {
-        background-color: rgba(245, 158, 11, 0.12);
-        border-left: 4px solid #f59e0b;
-        color: #f59e0b;
-    }
-    .action-routine {
-        background-color: rgba(59, 130, 246, 0.12);
-        border-left: 4px solid #3b82f6;
-        color: #3b82f6;
-    }
+    .action-critical { background-color: rgba(185, 28, 28, 0.06); border-left: 3px solid var(--mdas-critical); color: var(--mdas-critical); }
+    .action-warning  { background-color: rgba(217, 119, 6, 0.06); border-left: 3px solid var(--mdas-caution); color: var(--mdas-caution); }
+    .action-routine  { background-color: rgba(51, 65, 85, 0.05); border-left: 3px solid var(--mdas-accent); color: var(--mdas-slate-600); }
 
-    /* Tag Pills */
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+    .dot-critical { background-color: var(--mdas-critical); box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2); }
+    .dot-warning  { background-color: var(--mdas-caution);  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2); }
+    .dot-routine  { background-color: var(--mdas-accent);   box-shadow: 0 0 0 2px rgba(51, 65, 85, 0.2); }
+
     .tag-chip {
         display: inline-block;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        background-color: rgba(128, 128, 128, 0.12);
-        border: 1px solid rgba(128, 128, 128, 0.2);
+        padding: 3px 9px;
+        border-radius: 4px;
+        font-size: 0.74rem;
+        font-weight: 550;
+        background-color: rgba(100, 116, 139, 0.08);
+        border: 1px solid var(--mdas-slate-border);
+        color: var(--mdas-slate-600);
         margin: 2px 4px 2px 0;
     }
-    
-    /* Code Pane styling */
+
+    /* --- Prompt launcher cards --- */
+    .prompt-card {
+        border: 1px solid var(--mdas-slate-border);
+        border-radius: 6px;
+        padding: 10px 12px;
+        background-color: var(--mdas-surface);
+        transition: box-shadow 0.15s ease, border-color 0.15s ease;
+        margin-bottom: 6px;
+    }
+    .prompt-card:hover {
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        border-color: var(--mdas-slate-400);
+    }
+    .prompt-card-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--mdas-slate-900);
+    }
+
     .code-container {
-        border-left: 1px solid rgba(128, 128, 128, 0.15);
+        border-left: 1px solid var(--mdas-slate-border);
         padding-left: 16px;
     }
 </style>
@@ -132,12 +174,12 @@ if not engine_ready:
 
 # --- Sample Library ---
 SAMPLE_QUERIES = {
-    "🚨 Urgent Outage": "URGENT: Production payment gateway is down and throwing 500 errors. Fix this immediately or I am canceling our enterprise agreement today!",
-    "🚪 Churn Risk": "I am deeply disappointed with the latest software update. The UI is clunky and slow. We are seriously evaluating switching to your competitor next month.",
-    "💬 Billing Inquiry": "Hello support team, could you please explain why our invoice #84920 includes a 15% recurring cloud surcharge? Thank you.",
-    "🎭 Sarcastic Ticket": "Oh brilliant engineering work, team. Deploying breaking database migrations on Friday evening without testing is truly a masterclass in QA.",
-    "🛡️ Phishing Spam": "CONGRATULATIONS WINNER! You have won an exclusive $5,000 Apple Gift Card. Click here now to verify your credentials before this prize expires!",
-    "🌟 Rave Review": "I am absolutely thrilled with this tool! The latency is lightning fast and our entire engineering workflow has doubled in productivity."
+    "Urgent Outage": "URGENT: Production payment gateway is down and throwing 500 errors. Fix this immediately or I am canceling our enterprise agreement today!",
+    "Churn Risk": "I am deeply disappointed with the latest software update. The UI is clunky and slow. We are seriously evaluating switching to your competitor next month.",
+    "Billing Inquiry": "Hello support team, could you please explain why our invoice #84920 includes a 15% recurring cloud surcharge? Thank you.",
+    "Sarcastic Feedback": "Oh brilliant engineering work, team. Deploying breaking database migrations on Friday evening without testing is truly a masterclass in QA.",
+    "Phishing Spam": "CONGRATULATIONS WINNER! You have won an exclusive $5,000 Apple Gift Card. Click here now to verify your credentials before this prize expires!",
+    "Rave Review": "I am absolutely thrilled with this tool! The latency is lightning fast and our entire engineering workflow has doubled in productivity."
 }
 
 # --- Sidebar Controls ---
@@ -156,8 +198,8 @@ top_left, top_right = st.columns([1.1, 1] if show_code_pane and split_ratio != "
 with top_left:
     st.markdown("""
     <div class="top-bar">
-        <div class="pane-title">🖥️ Interactive Preview</div>
-        <div class="status-badge">● Engine Online (v0.1.0)</div>
+        <div class="pane-title">Interactive Telemetry Preview</div>
+        <div class="status-badge">Engine Online (v0.1.0)</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -165,8 +207,8 @@ if show_code_pane and split_ratio != "Preview Only":
     with top_right:
         st.markdown("""
         <div class="top-bar">
-            <div class="pane-title">📄 Code & Integration Palette</div>
-            <div style="font-size: 0.8rem; opacity: 0.6;">Python • REST • Architecture</div>
+            <div class="pane-title">Code & Integration Palette</div>
+            <div style="font-size: 0.76rem; color: var(--mdas-slate-400); font-weight: 550;">PYTHON • REST • CONTRACTS</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -183,17 +225,23 @@ else:
 # LEFT PANE: PREVIEW & INTERACTION
 # ==========================================
 with col_preview:
-    st.markdown("### 🧭 MDAS Operational Radar")
+    st.markdown("### MDAS Operational Radar")
     st.caption("Multi-Dimensional Text Analysis System • Modular Monolith V0.1 • Fast Offline NLP")
 
-    # Quick Samples Grid
-    st.markdown("**Quick Example Prompts:**")
+    # Quick Samples Grid (Bordered Launcher Cards)
+    st.markdown("<div class='kpi-eyebrow' style='margin-top:12px; margin-bottom: 6px;'>Quick Example Prompts</div>", unsafe_allow_html=True)
     sample_cols = st.columns(3)
     sample_items = list(SAMPLE_QUERIES.items())
     for idx, (s_name, s_text) in enumerate(sample_items):
         target_col = sample_cols[idx % 3]
-        if target_col.button(s_name, key=f"samp_btn_{idx}", use_container_width=True):
-            st.session_state["active_prompt"] = s_text
+        with target_col:
+            st.markdown(f"""
+            <div class="prompt-card">
+                <div class="prompt-card-label">{s_name}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Load prompt", key=f"samp_btn_{idx}", use_container_width=True):
+                st.session_state["active_prompt"] = s_text
 
     current_prompt = st.session_state.get(
         "active_prompt", 
@@ -201,10 +249,11 @@ with col_preview:
     )
 
     # Input Box
+    st.write("")
     input_text = st.text_area(
         "Communication payload to analyze:",
         value=current_prompt,
-        height=100,
+        height=95,
         placeholder="Type or paste any customer communication, support ticket, review, or email..."
     )
 
@@ -236,43 +285,53 @@ with col_preview:
 
         st.write("")
 
-        # 5 Symmetric Top KPI Cards
+        # Hierarchy-First KPI Cards v2
         kpi_cols = st.columns(5)
+
         with kpi_cols[0]:
-            sent_icon = "🟢" if sentiment_label == "Positive" else "🔴" if sentiment_label == "Negative" else "⚪"
+            sent_risk = "risk-safe" if sentiment_label == "Positive" else "risk-critical" if sentiment_label == "Negative" else ""
             st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Sentiment</div>
-                <div class="kpi-value">{sent_icon} {sentiment_label}</div>
+            <div class="kpi-card {sent_risk}">
+                <div class="kpi-eyebrow">Sentiment</div>
+                <div class="kpi-value">{sentiment_label}</div>
+                <div class="kpi-sub">Polarity score {sentiment_score:.2f}</div>
             </div>
             """, unsafe_allow_html=True)
+
         with kpi_cols[1]:
             st.markdown(f"""
             <div class="kpi-card">
-                <div class="kpi-title">Primary Intent</div>
-                <div class="kpi-value">🎯 {intent_label}</div>
+                <div class="kpi-eyebrow">Primary Intent</div>
+                <div class="kpi-value">{intent_label}</div>
+                <div class="kpi-sub">Model-classified</div>
             </div>
             """, unsafe_allow_html=True)
+
         with kpi_cols[2]:
             st.markdown(f"""
             <div class="kpi-card">
-                <div class="kpi-title">Category Domain</div>
-                <div class="kpi-value">📂 {cat_label}</div>
+                <div class="kpi-eyebrow">Category Domain</div>
+                <div class="kpi-value">{cat_label}</div>
+                <div class="kpi-sub">Routing vertical</div>
             </div>
             """, unsafe_allow_html=True)
+
         with kpi_cols[3]:
             is_spam = spam_label.lower() == "spam"
             st.markdown(f"""
-            <div class="kpi-card">
-                <div class="kpi-title">Security Filter</div>
-                <div class="kpi-value">{'🚨 Spam' if is_spam else '✅ Authentic'}</div>
+            <div class="kpi-card {'risk-critical' if is_spam else 'risk-safe'}">
+                <div class="kpi-eyebrow">Security Filter</div>
+                <div class="kpi-value">{'Spam' if is_spam else 'Authentic'}</div>
+                <div class="kpi-sub">{'Flagged payload' if is_spam else 'Verified clean'}</div>
             </div>
             """, unsafe_allow_html=True)
+
         with kpi_cols[4]:
             st.markdown(f"""
             <div class="kpi-card">
-                <div class="kpi-title">Inference Time</div>
-                <div class="kpi-value">⚡ {latency_ms:.2f} ms</div>
+                <div class="kpi-eyebrow">Inference Time</div>
+                <div class="kpi-value">{latency_ms:.2f} ms</div>
+                <div class="kpi-sub">Local CPU inference</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -280,7 +339,7 @@ with col_preview:
         if urgency_score >= 0.67 or churn_score >= 0.85:
             st.markdown(f"""
             <div class="action-box action-critical">
-                <span style="font-size: 1.4rem;">🚨</span>
+                <span class="status-dot dot-critical"></span>
                 <div>
                     <strong>CRITICAL DISPATCH: Priority Live Queue</strong><br/>
                     High operational risk detected (Urgency: {urgency_score:.2f}, Churn Risk: {churn_score:.2f}). Escalated to Senior SRE & Account Retention playbook.
@@ -290,7 +349,7 @@ with col_preview:
         elif toxicity_score >= 0.50:
             st.markdown(f"""
             <div class="action-box action-warning">
-                <span style="font-size: 1.4rem;">⚠️</span>
+                <span class="status-dot dot-warning"></span>
                 <div>
                     <strong>CONTENT MODERATION: Staff Well-Being Review</strong><br/>
                     Elevated toxicity score ({toxicity_score:.2f}). Flagged for policy compliance and employee protection.
@@ -300,7 +359,7 @@ with col_preview:
         elif urgency_score >= 0.34 or churn_score >= 0.34:
             st.markdown(f"""
             <div class="action-box action-warning">
-                <span style="font-size: 1.4rem;">🔔</span>
+                <span class="status-dot dot-warning"></span>
                 <div>
                     <strong>TIER-2 ROUTING: Specialized {cat_label} Queue</strong><br/>
                     Moderate priority communication. Assigned to domain specialists for expedited response.
@@ -310,7 +369,7 @@ with col_preview:
         else:
             st.markdown(f"""
             <div class="action-box action-routine">
-                <span style="font-size: 1.4rem;">ℹ️</span>
+                <span class="status-dot dot-routine"></span>
                 <div>
                     <strong>ROUTINE TRIAGE: Standard Automation</strong><br/>
                     Low-risk communication. Queued for standard automated workflow processing.
@@ -327,15 +386,15 @@ with col_preview:
 
             fig = go.Figure()
             is_high_risk = urgency_score > 0.6 or churn_score > 0.6 or toxicity_score > 0.5
+            line_color = "#b91c1c" if is_high_risk else "#334155"
+            fill_color = "rgba(185, 28, 28, 0.10)" if is_high_risk else "rgba(51, 65, 85, 0.10)"
+
             fig.add_trace(go.Scatterpolar(
                 r=radar_vals + [radar_vals[0]],
                 theta=radar_cats + [radar_cats[0]],
                 fill='toself',
-                fillcolor='rgba(239, 68, 68, 0.22)' if is_high_risk else 'rgba(59, 130, 246, 0.22)',
-                line=dict(
-                    color='#ef4444' if is_high_risk else '#3b82f6',
-                    width=2.5
-                ),
+                fillcolor=fill_color,
+                line=dict(color=line_color, width=2),
                 name='Operational Footprint'
             ))
             fig.update_layout(
@@ -343,28 +402,31 @@ with col_preview:
                     radialaxis=dict(
                         visible=True,
                         range=[0, 1],
+                        tickvals=[0, 0.25, 0.5, 0.75, 1.0],
                         showticklabels=True,
+                        tickfont=dict(size=9, color="#94a3b8"),
                         ticks='',
-                        gridcolor='rgba(128, 128, 128, 0.2)'
+                        gridcolor='rgba(100, 116, 139, 0.15)',
+                        linecolor='rgba(100, 116, 139, 0.15)'
                     ),
                     angularaxis=dict(
-                        gridcolor='rgba(128, 128, 128, 0.2)',
-                        tickfont=dict(size=11)
+                        gridcolor='rgba(100, 116, 139, 0.15)',
+                        tickfont=dict(size=10.5, color="#475569")
                     ),
                     bgcolor='rgba(0,0,0,0)'
                 ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
                 showlegend=False,
-                margin=dict(l=35, r=35, t=25, b=25),
-                height=290
+                margin=dict(l=30, r=30, t=20, b=20),
+                height=280
             )
             st.plotly_chart(fig, use_container_width=True)
 
         with r_col2:
             st.markdown("##### 🎯 Behavioral Risk Signals")
             def show_signal(title, val, label, ev_count, icon):
-                color = "#10b981" if val < 0.34 else "#f59e0b" if val < 0.67 else "#ef4444"
+                color = "#059669" if val < 0.34 else "#d97706" if val < 0.67 else "#b91c1c"
                 st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
                     <span><strong>{icon} {title}</strong></span>

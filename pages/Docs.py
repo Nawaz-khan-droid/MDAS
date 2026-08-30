@@ -59,11 +59,11 @@ with doc_tab2:
     | **Sarcasm** | `sarcasm` | Literal Communication | Sarcastic Dissatisfaction / Mockery |
     
     #### Automated Dispatch Thresholds
-    - **Urgency $\ge 0.67$ and Churn $\ge 0.70$**: Triggers **Critical Dispatch** to Senior Engineering SRE & Retention Taskforce.
-    - **Urgency $\ge 0.67$**: Triggers **Critical Dispatch** to On-Call SRE Incident Response.
-    - **Churn Risk $\ge 0.70$**: Triggers **Retention Review** for Customer Success intervention.
-    - **Toxicity $\ge 0.50$**: Triggers **Content Moderation Review** for employee well-being.
-    - **Urgency $\ge 0.34$**: Routes to **Tier-2 Specialized Support**.
+    - **Urgency $\\ge 0.67$ and Churn $\\ge 0.70$**: Triggers **Critical Dispatch** to Senior Engineering SRE & Retention Taskforce.
+    - **Urgency $\\ge 0.67$**: Triggers **Critical Dispatch** to On-Call SRE Incident Response.
+    - **Churn Risk $\\ge 0.70$**: Triggers **Retention Review** for Customer Success intervention.
+    - **Toxicity $\\ge 0.50$**: Triggers **Content Moderation Review** for employee well-being.
+    - **Urgency $\\ge 0.34$**: Routes to **Tier-2 Specialized Support**.
     - **Otherwise**: Enters **Routine Automated Processing**.
     """)
 

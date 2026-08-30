@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from mdas.classification.model import TextClassifier
 from mdas.core.errors import ModelUnavailableError
-TASKS=("spam","sentiment","intent","category","moderation","document_type")
+TASKS=("spam","sentiment","intent","category","moderation","document_type","sarcasm")
 class ModelRegistry:
     def __init__(self, model_dir):
         self.model_dir=Path(model_dir); self.models={}

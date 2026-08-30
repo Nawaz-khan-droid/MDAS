@@ -26,11 +26,12 @@ class MDASAnalyzer:
         stats=analyze_statistics(doc); ling=analyze_linguistics(doc,self.config.include_token_details)
         classification={}; warnings=[]
         
-        # Step 1: Base & Domain classifications (Spam, Sentiment, Category)
-        for task in ("spam","sentiment","category","moderation","document_type"):
+        # Step 1: Base & Domain classifications
+        for task in ("spam","sentiment","category","moderation","document_type","sarcasm"):
             if not self.registry or not self.registry.has(task):
                 classification[task]={"label":None,"confidence":None,"status":"model_unavailable"}
-                warnings.append(f"No trained {task} model is available; classification omitted.")
+                if task != "sarcasm": # Don't warn for sarcasm to avoid UI clutter
+                    warnings.append(f"No trained {task} model is available; classification omitted.")
             else:
                 r=self.registry.predict(task,text)
                 classification[task]={"label":r.label,"confidence":r.confidence,"status":r.status,"model":r.model,"domain":r.domain,"alternatives":r.alternatives}
@@ -65,6 +66,19 @@ class MDASAnalyzer:
             
         sent=classification["sentiment"].get("label", "neutral")
         signals=build_signals(text,sent)
+        
+        # Override Sarcasm Lexical Baseline with ML Model if available
+        ml_sarcasm = classification.get("sarcasm", {})
+        if ml_sarcasm.get("label"):
+            is_sarcastic = ml_sarcasm["label"] == "sarcastic"
+            score = ml_sarcasm["confidence"] if is_sarcastic else (1.0 - (ml_sarcasm["confidence"] or 1.0))
+            signals["sarcasm"] = {
+                "score": round(score, 3) if score else 0.0,
+                "label": "likely" if is_sarcastic else "low",
+                "method": "classification_model",
+                "warning": None
+            }
+
         radar={"sentiment":sentiment_signal_from_label(sent),"urgency":signals["urgency"]["score"],"churn_risk":signals["churn_risk"]["score"],"toxicity":signals["toxicity"]["score"],"sarcasm":signals["sarcasm"]["score"]}
         return AnalysisResult(meta={"language":identify_english(text),"backend":self.backend.name,"input_characters":len(text),"max_characters":self.config.max_characters},statistics=stats,linguistics=ling,classification=classification,radar=radar,signals=signals,warnings=warnings)
     def _validate(self,text):

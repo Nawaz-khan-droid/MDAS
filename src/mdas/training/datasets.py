@@ -1,6 +1,6 @@
 from pathlib import Path
 import pandas as pd
-REQUIRED={"spam":("spam.csv","text","label"),"sentiment":("sentiment.csv","text","label"),"intent":("intent.csv","text","label"),"category":("category.csv","text","label"),"moderation":("moderation.csv","text","label"),"document_type":("document_type.csv","text","label")}
+REQUIRED={"spam":("spam.csv","text","label"),"sentiment":("sentiment.csv","text","label"),"intent":("intent.csv","text","label"),"category":("category.csv","text","label"),"moderation":("moderation.csv","text","label"),"document_type":("document_type.csv","text","label"),"sarcasm":("sarcasm.csv","text","label")}
 def load_task_data(data_dir,task):
     filename,tc,lc=REQUIRED[task]; path=Path(data_dir)/filename
     if not path.exists(): raise FileNotFoundError(f"Missing {task} dataset: {path}")
@@ -50,6 +50,28 @@ def load_task_data(data_dir,task):
             {"text": "Error code 500 keeps popping up when I try to save.", "label": "TECHNICAL"},
             {"text": "The video playback stutters and buffers endlessly.", "label": "TECHNICAL"}
         ] * 15)
+        
+    elif task == "sarcasm":
+        extra_rows.extend([
+            {"text": "Oh wonderful, another update that breaks all my workflows. Great job guys.", "label": "sarcastic"},
+            {"text": "Fantastic, my screen is completely frozen again.", "label": "sarcastic"},
+            {"text": "What a brilliant idea to remove the save button. Now I've lost everything.", "label": "sarcastic"},
+            {"text": "Your customer service is stellar, I've been on hold for three hours.", "label": "sarcastic"},
+            {"text": "I love it when the application crashes right before a deadline. It's my favorite.", "label": "sarcastic"},
+            {"text": "Wow, a 50% price increase. Just what I wanted for Christmas.", "label": "sarcastic"},
+            {"text": "Thanks for ignoring my emails for a month, really appreciate the prompt support.", "label": "sarcastic"},
+            {"text": "Oh great, another 'improvement' that removes all the features I actually use.", "label": "sarcastic"},
+            {"text": "Sure, I love waiting in queue for 45 minutes to talk to a robot.", "label": "sarcastic"},
+            {"text": "I just wanted to say that your new update is fantastic. It saved me hours of work!", "label": "genuine"},
+            {"text": "The customer service rep, Sarah, was incredibly helpful and polite. Great job!", "label": "genuine"},
+            {"text": "Honestly, this is the most intuitive interface I have ever used.", "label": "genuine"},
+            {"text": "I love using your product, it's the best tool in the market by far.", "label": "genuine"},
+            {"text": "Thank you so much for resolving my issue so quickly.", "label": "genuine"},
+            {"text": "Five stars! Will definitely recommend this software to my colleagues.", "label": "genuine"},
+            {"text": "The UI is completely misaligned on my iPad, buttons are overlapping.", "label": "genuine"},
+            {"text": "Whenever I upload an image larger than 2MB, the app freezes completely.", "label": "genuine"},
+            {"text": "This software is an absolute nightmare to configure.", "label": "genuine"}
+        ] * 10)
         
     if extra_rows:
         df = pd.concat([df, pd.DataFrame(extra_rows)], ignore_index=True)

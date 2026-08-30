@@ -14,13 +14,12 @@ from mdas.classification.embeddings import DenseTransformer
 
 from sklearn.calibration import CalibratedClassifierCV
 
-DOMAINS={"spam":"SMS spam/ham","sentiment":"Twitter US airline sentiment","intent":"customer support intent","category":"consumer complaint product/category","moderation":"user-supplied content moderation taxonomy","document_type":"user-supplied document type taxonomy"}
+DOMAINS={"spam":"SMS spam/ham","sentiment":"Twitter US airline sentiment","intent":"customer support intent","category":"consumer complaint product/category","moderation":"user-supplied content moderation taxonomy","document_type":"user-supplied document type taxonomy","sarcasm":"sarcasm detection"}
 
 MODELS = {
     "LogisticRegression": lambda: LogisticRegression(max_iter=1500, class_weight="balanced"),
-    "LinearSVC": lambda: CalibratedClassifierCV(LinearSVC(class_weight="balanced", random_state=42)),
-    "MultinomialNB": lambda: MultinomialNB(),
-    "SGDClassifier": lambda: SGDClassifier(class_weight="balanced", loss="log_loss", random_state=42) # Changed to log_loss for probability
+    "LinearSVC": lambda: CalibratedClassifierCV(LinearSVC(max_iter=1500, class_weight="balanced", dual=False), cv=3),
+    "MultinomialNB": lambda: MultinomialNB()
 }
 
 def train_one(task,data_dir,out_dir,seed=42):

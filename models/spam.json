@@ -1,6 +1,6 @@
 {
   "task": "spam",
-  "model_name": "TF-IDF + LogisticRegression",
+  "model_name": "TF-IDF + LinearSVC",
   "domain": "SMS spam/ham",
   "labels": [
     "ham",
@@ -8,32 +8,32 @@
   ],
   "train_rows": 4135,
   "test_rows": 1034,
-  "macro_f1": 0.94789,
+  "macro_f1": 0.96223,
   "seed": 42,
   "classification_report": {
     "ham": {
-      "precision": 0.9877913429522752,
-      "recall": 0.9856035437430787,
-      "f1-score": 0.9866962305986696,
+      "precision": 0.987885462555066,
+      "recall": 0.9933554817275747,
+      "f1-score": 0.9906129210381005,
       "support": 903.0
     },
     "spam": {
-      "precision": 0.9022556390977443,
+      "precision": 0.9523809523809523,
       "recall": 0.916030534351145,
-      "f1-score": 0.9090909090909091,
+      "f1-score": 0.933852140077821,
       "support": 131.0
     },
-    "accuracy": 0.97678916827853,
+    "accuracy": 0.9835589941972921,
     "macro avg": {
-      "precision": 0.9450234910250097,
-      "recall": 0.9508170390471118,
-      "f1-score": 0.9478935698447893,
+      "precision": 0.9701332074680091,
+      "recall": 0.9546930080393599,
+      "f1-score": 0.9622325305579608,
       "support": 1034.0
     },
     "weighted avg": {
-      "precision": 0.9769546145142254,
-      "recall": 0.97678916827853,
-      "f1-score": 0.9768642217809553,
+      "precision": 0.9833873089449994,
+      "recall": 0.9835589941972921,
+      "f1-score": 0.983421758266537,
       "support": 1034.0
     }
   }

@@ -12,4 +12,9 @@ class TextClassifier:
         if hasattr(self.pipeline,"predict_proba"):
             ranked=sorted(zip(self.pipeline.classes_,self.pipeline.predict_proba([text])[0]),key=lambda x:x[1],reverse=True)
             confidence=float(ranked[0][1]); alternatives=[{"label":str(x),"confidence":round(float(p),4)} for x,p in ranked[:3]]
+            
+            # Confidence Threshold Fallback (30%)
+            if confidence < 0.30:
+                label = "needs_human_triage"
+                
         return ClassificationResult(label,round(confidence,4) if confidence is not None else None,"ok",self.metadata.get("model_name"),self.metadata.get("domain"),alternatives)

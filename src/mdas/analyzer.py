@@ -25,12 +25,46 @@ class MDASAnalyzer:
         self._validate(text); doc=self.backend.analyze(text)
         stats=analyze_statistics(doc); ling=analyze_linguistics(doc,self.config.include_token_details)
         classification={}; warnings=[]
-        for task in ("spam","sentiment","intent","category","moderation","document_type"):
+        
+        # Step 1: Base & Domain classifications (Spam, Sentiment, Category)
+        for task in ("spam","sentiment","category","moderation","document_type"):
             if not self.registry or not self.registry.has(task):
-                classification[task]={"label":None,"confidence":None,"status":"model_unavailable"}; warnings.append(f"No trained {task} model is available; classification omitted.")
+                classification[task]={"label":None,"confidence":None,"status":"model_unavailable"}
+                warnings.append(f"No trained {task} model is available; classification omitted.")
             else:
-                r=self.registry.predict(task,text); classification[task]={"label":r.label,"confidence":r.confidence,"status":r.status,"model":r.model,"domain":r.domain,"alternatives":r.alternatives}
-        sent=classification["sentiment"]["label"]; signals=build_signals(text,sent)
+                r=self.registry.predict(task,text)
+                classification[task]={"label":r.label,"confidence":r.confidence,"status":r.status,"model":r.model,"domain":r.domain,"alternatives":r.alternatives}
+        
+        # Step 2: Hierarchical Intent Routing
+        # Intent classification is now contextually aware of the predicted Category
+        cat_label = classification.get("category", {}).get("label")
+        if not self.registry or not self.registry.has("intent"):
+            classification["intent"]={"label":None,"confidence":None,"status":"model_unavailable"}
+        else:
+            # Predict raw intent
+            r = self.registry.predict("intent", text)
+            intent_label = r.label
+            
+            # Hierarchical Sanity Check: If intent confidence is critically low (<30%),
+            # or if the generic model fails to align with the categorical domain, flag for triage.
+            if r.confidence is not None and r.confidence < 0.30:
+                intent_label = "needs_human_triage"
+            elif cat_label == "TECHNICAL" and intent_label not in ["report_bug", "server_issue", "technical_assistance", "needs_human_triage"]:
+                # Attempt to find a valid technical intent in the top 3 alternatives
+                found_tech = False
+                for alt in r.alternatives:
+                    if alt["label"] in ["report_bug", "server_issue", "technical_assistance"]:
+                        intent_label = alt["label"]
+                        r.confidence = alt["confidence"]
+                        found_tech = True
+                        break
+                if not found_tech:
+                    intent_label = "needs_human_triage" # Fallback
+            
+            classification["intent"]={"label":intent_label,"confidence":r.confidence,"status":r.status,"model":r.model,"domain":r.domain,"alternatives":r.alternatives}
+            
+        sent=classification["sentiment"].get("label", "neutral")
+        signals=build_signals(text,sent)
         radar={"sentiment":sentiment_signal_from_label(sent),"urgency":signals["urgency"]["score"],"churn_risk":signals["churn_risk"]["score"],"toxicity":signals["toxicity"]["score"],"sarcasm":signals["sarcasm"]["score"]}
         return AnalysisResult(meta={"language":identify_english(text),"backend":self.backend.name,"input_characters":len(text),"max_characters":self.config.max_characters},statistics=stats,linguistics=ling,classification=classification,radar=radar,signals=signals,warnings=warnings)
     def _validate(self,text):

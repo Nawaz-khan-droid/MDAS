@@ -10,14 +10,17 @@ from sklearn.metrics import classification_report, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from mdas.training.datasets import load_task_data
+from mdas.classification.embeddings import DenseTransformer
+
+from sklearn.calibration import CalibratedClassifierCV
 
 DOMAINS={"spam":"SMS spam/ham","sentiment":"Twitter US airline sentiment","intent":"customer support intent","category":"consumer complaint product/category","moderation":"user-supplied content moderation taxonomy","document_type":"user-supplied document type taxonomy"}
 
 MODELS = {
     "LogisticRegression": lambda: LogisticRegression(max_iter=1500, class_weight="balanced"),
-    "LinearSVC": lambda: LinearSVC(class_weight="balanced", random_state=42),
+    "LinearSVC": lambda: CalibratedClassifierCV(LinearSVC(class_weight="balanced", random_state=42)),
     "MultinomialNB": lambda: MultinomialNB(),
-    "SGDClassifier": lambda: SGDClassifier(class_weight="balanced", random_state=42)
+    "SGDClassifier": lambda: SGDClassifier(class_weight="balanced", loss="log_loss", random_state=42) # Changed to log_loss for probability
 }
 
 def train_one(task,data_dir,out_dir,seed=42):
@@ -30,8 +33,11 @@ def train_one(task,data_dir,out_dir,seed=42):
     
     print(f"\n--- Training [{task}] ---")
     for name, clf_func in MODELS.items():
+        if name == "MultinomialNB":
+            continue # NB doesn't handle negative values which dense embeddings have
+            
         model = Pipeline([
-            ("tfidf", TfidfVectorizer(lowercase=True,strip_accents="unicode",ngram_range=(1,2),min_df=2,max_features=30000,sublinear_tf=True)),
+            ("embeddings", DenseTransformer(model_name="all-MiniLM-L6-v2")),
             ("classifier", clf_func())
         ])
         model.fit(xtr, ytr)
@@ -48,7 +54,7 @@ def train_one(task,data_dir,out_dir,seed=42):
     print(f"[{task}] SELECTED: {best_name} with F1={best_f1:.4f}")
     
     out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True); joblib.dump(best_model,out_dir/f"{task}.joblib")
-    meta={"task":task,"model_name":f"TF-IDF + {best_name}","domain":DOMAINS[task],"labels":sorted(map(str,best_model.classes_)),"train_rows":len(xtr),"test_rows":len(xte),"macro_f1":round(float(best_f1),5),"seed":seed,"classification_report":classification_report(yte,best_pred,output_dict=True,zero_division=0)}
+    meta={"task":task,"model_name":f"SentenceTransformer + {best_name}","domain":DOMAINS[task],"labels":sorted(map(str,best_model.classes_)),"train_rows":len(xtr),"test_rows":len(xte),"macro_f1":round(float(best_f1),5),"seed":seed,"classification_report":classification_report(yte,best_pred,output_dict=True,zero_division=0)}
     (out_dir/f"{task}.json").write_text(json.dumps(meta,indent=2),encoding="utf-8")
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--data-dir",default="data/raw",type=Path); p.add_argument("--output-dir",default="models",type=Path); p.add_argument("--task",choices=list(DOMAINS)+["all"],default="all"); a=p.parse_args()

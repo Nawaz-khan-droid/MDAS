@@ -275,7 +275,7 @@ def chat_input():
           autosize=True,
           key="chat_input",
           min_rows=1,
-          on_input=on_chat_input,
+          on_blur=on_chat_input,
           shortcuts={
             me.Shortcut(shift=False, key="Enter"): on_submit_chat_msg,
           },
@@ -401,7 +401,7 @@ def on_click_theme_brightness(e: me.ClickEvent):
   else:
     me.set_theme_mode("light")
 
-def on_chat_input(e: me.InputEvent):
+def on_chat_input(e: me.InputBlurEvent):
   state = me.state(State)
   state.input_text = e.value
 

@@ -270,27 +270,27 @@ def chat_input():
         padding=me.Padding.symmetric(horizontal=15, vertical=5)
       )
     ):
-      me.native_textarea(
-        autosize=True,
-        key="chat_input",
-        min_rows=1,
-        on_input=on_chat_input,
-        shortcuts={
-          me.Shortcut(shift=False, key="Enter"): on_submit_chat_msg,
-        },
-        placeholder="Type a message to analyze...",
-        style=me.Style(
-          background="transparent",
-          border=me.Border.all(me.BorderSide(style="none")),
-          color=me.theme_var("on-surface"),
-          outline="none",
-          width="100%",
-          flex_grow=1,
-          padding=me.Padding(top=12, bottom=12),
-          font_size=15
-        ),
-        value=state.input_text,
-      )
+      with me.box(style=me.Style(flex_grow=1)):
+        me.native_textarea(
+          autosize=True,
+          key="chat_input",
+          min_rows=1,
+          on_input=on_chat_input,
+          shortcuts={
+            me.Shortcut(shift=False, key="Enter"): on_submit_chat_msg,
+          },
+          placeholder="Type a message to analyze...",
+          style=me.Style(
+            background="transparent",
+            border=me.Border.all(me.BorderSide(style="none")),
+            color=me.theme_var("on-surface"),
+            outline="none",
+            width="100%",
+            padding=me.Padding(top=12, bottom=12),
+            font_size=15
+          ),
+          value=state.input_text,
+        )
       with me.content_button(
         disabled=state.in_progress,
         on_click=on_click_submit_chat_msg,

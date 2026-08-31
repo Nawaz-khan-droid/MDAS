@@ -162,10 +162,10 @@ def run_test():
         snippet = snippet.replace("|", "").replace("\n", " ")
         md_content += f"| {r['ID']} | {snippet} | {r['Spam']} | {r['Sentiment']} | {r['Intent']} | {r['Category']} |\n"
         
-    with open("evaluation_report.md", "w", encoding="utf-8") as f:
+    with open("evaluation_report_v2.md", "w", encoding="utf-8") as f:
         f.write(md_content)
         
-    print("Done! Report saved to evaluation_report.md")
+    print("Done! Report saved to evaluation_report_v2.md")
 
 if __name__ == "__main__":
     run_test()

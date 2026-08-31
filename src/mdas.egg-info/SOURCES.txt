@@ -17,7 +17,9 @@ src/mdas/analysis/statistics.py
 src/mdas/analysis/voice.py
 src/mdas/api/__init__.py
 src/mdas/api/app.py
+src/mdas/api/main.py
 src/mdas/classification/__init__.py
+src/mdas/classification/embeddings.py
 src/mdas/classification/model.py
 src/mdas/classification/registry.py
 src/mdas/core/__init__.py

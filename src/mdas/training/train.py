@@ -52,9 +52,15 @@ def train_one(task,data_dir,out_dir,seed=42):
             
     print(f"[{task}] SELECTED: {best_name} with F1={best_f1:.4f}")
     
-    out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True); joblib.dump(best_model,out_dir/f"{task}.joblib")
+    out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True);
     meta={"task":task,"model_name":f"SentenceTransformer + {best_name}","domain":DOMAINS[task],"labels":sorted(map(str,best_model.classes_)),"train_rows":len(xtr),"test_rows":len(xte),"macro_f1":round(float(best_f1),5),"seed":seed,"classification_report":classification_report(yte,best_pred,output_dict=True,zero_division=0)}
-    (out_dir/f"{task}.json").write_text(json.dumps(meta,indent=2),encoding="utf-8")
+    
+    export_task = "topic" if task == "category" else task
+    
+    (out_dir/f"{export_task}.json").write_text(json.dumps(meta,indent=2),encoding="utf-8")
+    joblib.dump(best_model, out_dir/f"{export_task}.joblib")
+    if export_task != task:
+        print(f"[{task}] Saved as '{export_task}'")
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--data-dir",default="data/raw",type=Path); p.add_argument("--output-dir",default="models",type=Path); p.add_argument("--task",choices=list(DOMAINS)+["all"],default="all"); a=p.parse_args()
     for t in DOMAINS if a.task=="all" else [a.task]: train_one(t,a.data_dir,a.output_dir)

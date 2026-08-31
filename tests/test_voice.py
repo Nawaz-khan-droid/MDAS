@@ -2,7 +2,7 @@ from mdas.analysis.voice import analyze_voice
 class Morph:
     def get(self,key): return []
 class T:
-    def __init__(self,text,pos,dep,head=None): self.text=text; self.pos_=pos; self.dep_=dep; self.head=head or self; self.morph=Morph()
+    def __init__(self,text,pos,dep,head=None, tag_=None): self.text=text; self.pos_=pos; self.dep_=dep; self.head=head or self; self.morph=Morph(); self.tag_=tag_ or pos
 class S:
     text="John wrote the report."
     def __iter__(self):

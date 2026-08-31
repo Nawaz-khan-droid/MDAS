@@ -1,0 +1,52 @@
+{
+  "spam": {
+    "rows": 200,
+    "classes": 2,
+    "distribution": {
+      "ham": 100,
+      "spam": 100
+    },
+    "min_class_count": 100,
+    "status": "viable",
+    "reason": null
+  },
+  "sentiment": {
+    "rows": 300,
+    "classes": 3,
+    "distribution": {
+      "negative": 100,
+      "neutral": 100,
+      "positive": 100
+    },
+    "min_class_count": 100,
+    "status": "viable",
+    "reason": null
+  },
+  "intent": {
+    "status": "error",
+    "reason": "Cannot take a larger sample than population when 'replace=False'"
+  },
+  "category": {
+    "status": "error",
+    "reason": "Cannot take a larger sample than population when 'replace=False'"
+  },
+  "moderation": {
+    "status": "error",
+    "reason": "data\\raw\\moderation.csv requires columns 'text' and 'label'"
+  },
+  "document_type": {
+    "status": "error",
+    "reason": "data\\raw\\document_type.csv requires columns 'text' and 'label'"
+  },
+  "sarcasm": {
+    "rows": 181,
+    "classes": 2,
+    "distribution": {
+      "genuine": 91,
+      "sarcastic": 90
+    },
+    "min_class_count": 90,
+    "status": "viable",
+    "reason": null
+  }
+}

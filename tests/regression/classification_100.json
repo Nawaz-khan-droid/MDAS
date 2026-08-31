@@ -1,0 +1,502 @@
+[
+  {
+    "text": "I need to cancel my order immediately.",
+    "expected_intent": "cancel_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Please abort my recent purchase.",
+    "expected_intent": "cancel_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can I change the items in my order?",
+    "expected_intent": "change_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to update my order with a different color.",
+    "expected_intent": "change_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I need to ship this to my new apartment instead.",
+    "expected_intent": "change_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I update the delivery address on my account?",
+    "expected_intent": "change_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "What is the fee if I cancel my subscription?",
+    "expected_intent": "check_cancellation_fee",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Do you charge a penalty for early cancellation?",
+    "expected_intent": "check_cancellation_fee",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Where can I see my past invoices?",
+    "expected_intent": "check_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I would like to review the invoice for my last purchase.",
+    "expected_intent": "check_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Do you accept PayPal?",
+    "expected_intent": "check_payment_methods",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "What credit cards can I use on your site?",
+    "expected_intent": "check_payment_methods",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "What is your return policy?",
+    "expected_intent": "check_refund_policy",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How many days do I have to request a refund?",
+    "expected_intent": "check_refund_policy",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "The item arrived broken, this is unacceptable!",
+    "expected_intent": "complaint",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Your service is terrible, I am very disappointed.",
+    "expected_intent": "complaint",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I need help from customer service.",
+    "expected_intent": "contact_customer_service",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can someone from support please assist me?",
+    "expected_intent": "contact_customer_service",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to speak to a real person.",
+    "expected_intent": "contact_human_agent",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Transfer me to a live agent.",
+    "expected_intent": "contact_human_agent",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I sign up for a new account?",
+    "expected_intent": "create_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I would like to register for your website.",
+    "expected_intent": "create_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Please close my account.",
+    "expected_intent": "delete_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to permanently delete my profile.",
+    "expected_intent": "delete_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "What are the available shipping options?",
+    "expected_intent": "delivery_options",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Do you offer express delivery?",
+    "expected_intent": "delivery_options",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How long does shipping take?",
+    "expected_intent": "delivery_period",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "When will my package arrive?",
+    "expected_intent": "delivery_period",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I need to change my profile name.",
+    "expected_intent": "edit_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I update my phone number in my profile?",
+    "expected_intent": "edit_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Please send me a copy of my invoice.",
+    "expected_intent": "get_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I need a receipt for tax purposes.",
+    "expected_intent": "get_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I would like my money back.",
+    "expected_intent": "get_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Please process a refund for my last order.",
+    "expected_intent": "get_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Sign me up for the weekly newsletter.",
+    "expected_intent": "newsletter_subscription",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to subscribe to your mailing list.",
+    "expected_intent": "newsletter_subscription",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "My credit card was declined during checkout.",
+    "expected_intent": "payment_issue",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I am getting an error when trying to pay.",
+    "expected_intent": "payment_issue",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to buy the premium package.",
+    "expected_intent": "place_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I complete my purchase?",
+    "expected_intent": "place_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I forgot my password and can't log in.",
+    "expected_intent": "recover_password",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Please send a password reset link.",
+    "expected_intent": "recover_password",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "The website keeps crashing when I try to sign up.",
+    "expected_intent": "registration_problems",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I can't create an account, it gives me a server error.",
+    "expected_intent": "registration_problems",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "The shoes are amazing, highly recommended!",
+    "expected_intent": "review",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I love this product, it works perfectly.",
+    "expected_intent": "review",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I need to add a new delivery address.",
+    "expected_intent": "set_up_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I add a secondary address to my account?",
+    "expected_intent": "set_up_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to switch to my business account.",
+    "expected_intent": "switch_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How do I log into a different profile?",
+    "expected_intent": "switch_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Where is my package right now?",
+    "expected_intent": "track_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can I get a tracking number for my shipment?",
+    "expected_intent": "track_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Has my refund been processed yet?",
+    "expected_intent": "track_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "When will the money be back in my bank?",
+    "expected_intent": "track_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Abort my current purchase.",
+    "expected_intent": "cancel_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Change my order to a size large.",
+    "expected_intent": "change_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Send it to my work address instead.",
+    "expected_intent": "change_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Is there a fee for cancelling?",
+    "expected_intent": "check_cancellation_fee",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Show me my bill.",
+    "expected_intent": "check_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can I pay with crypto?",
+    "expected_intent": "check_payment_methods",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can I return this after 30 days?",
+    "expected_intent": "check_refund_policy",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "This software is a piece of trash.",
+    "expected_intent": "complaint",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Help desk, please.",
+    "expected_intent": "contact_customer_service",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Get me a human now.",
+    "expected_intent": "contact_human_agent",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Open a new account for me.",
+    "expected_intent": "create_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Erase my data and account.",
+    "expected_intent": "delete_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Is next day shipping available?",
+    "expected_intent": "delivery_options",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "How many days until it gets here?",
+    "expected_intent": "delivery_period",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Update my email address.",
+    "expected_intent": "edit_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Download my invoice.",
+    "expected_intent": "get_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Refund my credit card.",
+    "expected_intent": "get_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Add me to the mailing list.",
+    "expected_intent": "newsletter_subscription",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Payment failed on step 3.",
+    "expected_intent": "payment_issue",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to order three of these.",
+    "expected_intent": "place_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Reset my password.",
+    "expected_intent": "recover_password",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "The registration page is broken.",
+    "expected_intent": "registration_problems",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "This is the best service I have ever used.",
+    "expected_intent": "review",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Set my default shipping address.",
+    "expected_intent": "set_up_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Change to my other profile.",
+    "expected_intent": "switch_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "What is the status of my delivery?",
+    "expected_intent": "track_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Is my refund still pending?",
+    "expected_intent": "track_refund",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "The new desktop update completely broke my profile sync feature on Windows 11. Fix this broken loop immediately or I am canceling my monthly subscription!",
+    "expected_intent": "complaint",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I moved to a new city, update my delivery details.",
+    "expected_intent": "change_shipping_address",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I can't remember my login details.",
+    "expected_intent": "recover_password",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Your application is crashing on launch.",
+    "expected_intent": "complaint",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I want to buy this right now.",
+    "expected_intent": "place_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Can I see the receipt for my last payment?",
+    "expected_intent": "get_invoice",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Cancel my account and refund my money.",
+    "expected_intent": "delete_account",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Send me the tracking link.",
+    "expected_intent": "track_order",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "I am stuck on the sign-up page.",
+    "expected_intent": "registration_problems",
+    "expected_spam": "ham"
+  },
+  {
+    "text": "Buy cheap rolex watches today at http://spam.com",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "You have won a $1000 gift card! Click here to claim your prize.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Hot singles in your area are waiting for you.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Earn $5000 a week from home with this simple trick.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Your bank account has been locked. Verify your identity at this link.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Enlarge your size naturally within weeks!",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Invest in this new crypto coin before it goes to the moon!",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Get 90% off all designer handbags, limited time only.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Urgent: Your package could not be delivered. Pay the fee here.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  },
+  {
+    "text": "Congratulations! You are our 1 millionth visitor.",
+    "expected_intent": "unknown",
+    "expected_spam": "spam"
+  }
+]

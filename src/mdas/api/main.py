@@ -1,9 +1,12 @@
 import os
+import time
 import uuid
 import traceback
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from jinja2_fragments.fastapi import Jinja2Blocks
 from pydantic import BaseModel
 from mdas.api.schemas import AnalysisRequest, AnalysisResponse, UnsupportedLanguageResponse
@@ -33,6 +36,46 @@ app = FastAPI(
     redoc_url=None,
     openapi_url=None,
 )
+
+# ==========================================
+# RATE LIMITING (sliding window per IP)
+# ==========================================
+RATE_LIMIT_WINDOW = 60  # seconds
+RATE_LIMIT_MAX_REQUESTS = 30  # per window per IP
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        cutoff = now - RATE_LIMIT_WINDOW
+        # Prune old entries
+        _rate_limit_store[client_ip] = [t for t in _rate_limit_store[client_ip] if t > cutoff]
+        if len(_rate_limit_store[client_ip]) >= RATE_LIMIT_MAX_REQUESTS:
+            retry_after = int(_rate_limit_store[client_ip][0] + RATE_LIMIT_WINDOW - now) + 1
+            return JSONResponse(
+                status_code=429,
+                content={"status": "error", "error": {"code": "RATE_LIMITED", "message": "Too many requests. Try again shortly."}},
+                headers={"Retry-After": str(retry_after)},
+            )
+        _rate_limit_store[client_ip].append(now)
+        return await call_next(request)
+
+app.add_middleware(RateLimitMiddleware)
+
+# ==========================================
+# SECURITY HEADERS (HSTS, etc.)
+# ==========================================
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 from fastapi.exceptions import RequestValidationError
 from mdas.core.constants import MAX_TEXT_LENGTH

@@ -11,6 +11,7 @@ from mdas.analysis.statistics import analyze_statistics
 from mdas.analysis.linguistics import analyze_linguistics
 from mdas.core.constants import MAX_TEXT_LENGTH
 from mdas.analysis.lightweight_sentiment import polarity_scores as vader_polarity_scores
+from mdas.analysis.signals import build_signals
 
 class AnalysisService:
     def __init__(self, model_dir="models", allowed_tasks=None):
@@ -244,36 +245,15 @@ class AnalysisService:
 
         absa_res = [AspectResult(**a) for a in absa_results]
 
-        # 10. RADAR SIGNALS
-        # Churn Risk
-        churn_keywords = {"cancel", "canceling", "cancelling", "refund", "quit", "leave", "unsubscribe", "close account"}
-        churn_evidence = [t for t in text.lower().split() if any(k in t for k in churn_keywords)]
-        churn_score = 0.9 if churn_evidence else 0.1
-        
-        # Urgency
-        urgency_evidence = []
-        if "ERROR" in text: urgency_evidence.append("ERROR keyword")
-        if "!" in text: urgency_evidence.append("exclamation marks")
-        if churn_evidence: urgency_evidence.append("churn risk detected")
-        if sent_label == "negative": urgency_evidence.append("negative sentiment")
-        
-        is_urgent = (sent_label == "negative" and (len(urgency_evidence) >= 2)) or ("ERROR" in text)
-        urgency_score = 0.9 if is_urgent else 0.1
-        
-        # Sarcasm (Future Scope/Experimental)
-        sarcasm_score = 0.0
-        
-        # Toxicity
-        toxicity_keywords = {"idiot", "stupid", "dumb", "hate"}
-        is_toxic = any(k in text.lower() for k in toxicity_keywords)
-        toxicity_score = 0.8 if is_toxic else 0.0
+        # 10. RADAR SIGNALS (lexical baselines from signals.py)
+        raw_signals = build_signals(text, sent_label)
         
         radar_res = RadarSignals(
-            sentiment=(compound + 1) / 2.0, # normalized 0 to 1
-            urgency=urgency_score,
-            churn_risk=churn_score,
-            sarcasm=sarcasm_score,
-            toxicity=toxicity_score
+            sentiment=raw_signals["sentiment_source"]["method"] and (compound + 1) / 2.0,  # normalized 0 to 1
+            urgency=raw_signals["urgency"]["score"],
+            churn_risk=raw_signals["churn_risk"]["score"],
+            sarcasm=raw_signals["sarcasm"]["score"],
+            toxicity=raw_signals["toxicity"]["score"],
         )
 
         # 11. UNIFIED AnalysisResult

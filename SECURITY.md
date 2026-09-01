@@ -11,7 +11,7 @@ Report them privately through GitHub Security Advisories or repository contact.
 
 ## Security Audit Results
 
-The following claims are verified against the actual codebase (commit `88d57096`).
+The following claims are verified against the actual codebase.
 
 ### API Input Validation
 
@@ -23,13 +23,30 @@ The following claims are verified against the actual codebase (commit `88d57096`
 | Oversized payloads | Pydantic `string_too_long` error mapped to HTTP 413 (`main.py:42-46`) | Yes |
 | Unsupported language | Returns 400 with clean message, no internal details (`main.py:76-77`) | Yes |
 
+### Rate Limiting
+
+| Control | Implementation | Verified |
+|---------|---------------|----------|
+| Sliding window | 30 requests per 60-second window per IP (`main.py` `RateLimitMiddleware`) | Yes |
+| Response | HTTP 429 with `Retry-After` header and `RATE_LIMITED` error code | Yes |
+| Scope | All endpoints (API + UI) | Yes |
+
+### Security Headers (HSTS)
+
+| Header | Value | Verified |
+|--------|-------|----------|
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains` | Yes |
+| `X-Content-Type-Options` | `nosniff` | Yes |
+| `X-Frame-Options` | `DENY` | Yes |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Yes |
+
 ### Error Handling
 
 | Control | Implementation | Verified |
 |---------|---------------|----------|
 | No stack traces to clients | `traceback.print_exc()` goes to server logs only; client receives generic message (`main.py:84-85`) | Yes |
 | No filesystem paths in responses | Error messages are static strings, no `str(e)` with path info | Yes |
-| Consistent status codes | 400 (validation), 413 (oversized), 503 (not ready), 500 (internal) | Yes |
+| Consistent status codes | 400 (validation), 413 (oversized), 429 (rate limited), 503 (not ready), 500 (internal) | Yes |
 
 ### FastAPI Configuration
 
@@ -74,9 +91,7 @@ The following claims are verified against the actual codebase (commit `88d57096`
 
 ## Known Limitations
 
-- **No authentication**: The MVP API is unauthenticated. Anyone who discovers the endpoint can call it. The 5,000-character limit bounds per-request resource usage but does not prevent high request volume.
-- **No rate limiting**: Not implemented for MVP. Deploy behind a reverse proxy or CDN with rate limiting for production use.
-- **No HTTPS enforcement**: Render provides HTTPS at the edge. The application itself does not enforce HSTS.
+- **No authentication**: The MVP API is unauthenticated. Anyone who discovers the endpoint can call it. The 5,000-character limit bounds per-request resource usage. Rate limiting (30 req/min per IP) mitigates high request volume.
 - **English only**: Non-English text is rejected with HTTP 400.
 
 ## Third-Party Components

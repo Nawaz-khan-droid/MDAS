@@ -1,135 +1,115 @@
 {% extends "base.html" %}
 {% block head %}
 <style>
-    .hero { text-align: center; margin: 48px 0 72px; }
-    .hero h1 { font-size: 2.4rem; font-weight: 800; margin: 0 0 16px; color: var(--fg); letter-spacing: -0.025em; line-height: 1.15; }
-    .hero .subtitle { font-size: 1.05rem; color: var(--fg-muted); max-width: 640px; margin: 0 auto 28px; line-height: 1.6; }
-    .hero-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .hero { text-align: center; margin: 40px 0 56px; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin: 0 0 12px; color: var(--fg); letter-spacing: -0.02em; line-height: 1.3; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .hero .subtitle { font-size: 0.95rem; color: var(--fg-muted); max-width: 520px; margin: 0 auto 24px; line-height: 1.6; }
+    .hero-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
-    .feature-section {
-        margin-bottom: 56px;
+    .features { display: flex; flex-direction: column; gap: 40px; }
+
+    .feature-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 28px;
-        align-items: center;
+        gap: 24px;
+        align-items: start;
     }
-    .feature-section.reversed { direction: rtl; }
-    .feature-section.reversed > * { direction: ltr; }
-    .feature-text h2 { font-size: 1.35rem; margin: 0 0 10px; color: var(--fg); }
-    .feature-text p { font-size: 0.95rem; color: var(--fg-muted); margin: 0 0 14px; line-height: 1.6; }
+
+    .feature-text h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 8px; color: var(--fg); }
+    .feature-text p { font-size: 0.9rem; color: var(--fg-muted); margin: 0; line-height: 1.6; }
 
     .demo-card {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
-        padding: 20px;
-        font-family: inherit;
+        padding: 18px 20px;
     }
-    .demo-card .tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
-    .demo-card .text { color: var(--fg); margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; }
-    .demo-card .evidence { font-size: 13px; }
-    .demo-card .evidence dt { font-weight: 600; color: var(--fg-muted); margin-top: 4px; }
-    .demo-card .evidence dd { margin: 0 0 0 12px; font-weight: 500; }
+    .demo-card .tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .demo-card .text { color: var(--fg); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.6; }
 
-    .signal-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--border);
-        font-size: 13px;
-    }
-    .signal-item:last-child { border-bottom: none; }
-    .signal-item .label { font-weight: 500; color: var(--fg-muted); }
+    .evidence-list { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 12px; }
+    .evidence-list dt { font-weight: 600; color: var(--fg-muted); }
+    .evidence-list dd { margin: 0; font-weight: 500; }
 
-    .cta-section {
-        text-align: center;
-        padding: 48px 0;
-        border-top: 1px solid var(--border);
-    }
-    .cta-section h2 { font-size: 1.4rem; margin: 0 0 18px; color: var(--fg); }
+    .signal-list { display: flex; flex-direction: column; gap: 0; }
+    .signal-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-row .label { font-weight: 500; color: var(--fg-muted); }
+
+    .absa-list { display: flex; flex-direction: column; gap: 6px; }
+    .absa-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; }
+    .absa-item strong { font-weight: 600; }
+
+    .cta-section { text-align: center; padding: 32px 0; border-top: 1px solid var(--border); margin-top: 16px; }
+    .cta-section p { font-size: 0.95rem; color: var(--fg-muted); margin: 0 0 16px; }
 
     @media (max-width: 768px) {
-        .feature-section, .feature-section.reversed { grid-template-columns: 1fr; direction: ltr; }
-        .hero h1 { font-size: 1.7rem; }
-        .hero .subtitle { font-size: 0.95rem; }
+        .feature-row { grid-template-columns: 1fr; }
+        .hero h1 { font-size: 1.4rem; }
     }
 </style>
 {% endblock %}
 {% block content %}
 <div class="hero">
-    <h1>Understand what each clause is doing.</h1>
-    <div class="subtitle">Analyze Active, Passive, and Linking voice at the clause level with structured linguistic evidence, alongside radar signals, ABSA, sentiment, and spam analysis.</div>
+    <h1>Multi-dimensional text analysis in one API call.</h1>
+    <div class="subtitle">Clause-level voice, sentiment, radar signals, aspect-based sentiment, and spam detection — all from a single endpoint.</div>
     <div class="hero-actions">
-        <a href="/app" class="btn">Analyze Text</a>
+        <a href="/app" class="btn">Try the Analyzer</a>
         <a href="/api-docs" class="btn btn-outline">API Docs</a>
     </div>
 </div>
 
-<section class="feature-section">
-    <div class="feature-text">
-        <h2>Clause-Level Voice Analysis</h2>
-        <p>MDAS segments your text into individual clauses and identifies Active, Passive, and Linking structures with exact grammatical evidence.</p>
+<div class="features">
+    <div class="feature-row">
+        <div class="feature-text">
+            <h2>Clause-Level Voice</h2>
+            <p>Segment text into clauses. Classify each as Active, Passive, or Linking with grammatical evidence.</p>
+        </div>
+        <div class="demo-card">
+            <span class="tag" style="background: var(--voice-passive-bg); color: var(--voice-passive-text);">Passive</span>
+            <div class="text">&ldquo;The package was delivered by the courier.&rdquo;</div>
+            <dl class="evidence-list">
+                <dt>Subject</dt><dd>package</dd>
+                <dt>Auxiliary</dt><dd>was</dd>
+                <dt>Verb</dt><dd>delivered</dd>
+                <dt>Agent</dt><dd>courier</dd>
+            </dl>
+        </div>
     </div>
-    <div class="demo-card">
-        <span class="tag" style="background: var(--voice-passive-bg); color: var(--voice-passive-text);">PASSIVE</span>
-        <div class="text">&ldquo;The package was delivered by the courier.&rdquo;</div>
-        <dl class="evidence">
-            <dt>Subject</dt><dd>package</dd>
-            <dt>Auxiliary</dt><dd>was</dd>
-            <dt>Verb</dt><dd>delivered</dd>
-            <dt>Agent</dt><dd>courier</dd>
-        </dl>
-    </div>
-</section>
 
-<section class="feature-section reversed">
-    <div class="demo-card">
-        <div class="signal-item">
-            <span class="label">Sentiment</span>
-            <span class="badge badge-active">0.72</span>
+    <div class="feature-row">
+        <div class="feature-text">
+            <h2>Operational Radar</h2>
+            <p>Five normalized signals for routing and moderation: sentiment, toxicity, sarcasm, urgency, churn risk.</p>
         </div>
-        <div class="signal-item">
-            <span class="label">Toxicity</span>
-            <span class="badge badge-success">0.04</span>
-        </div>
-        <div class="signal-item">
-            <span class="label">Sarcasm</span>
-            <span class="badge badge-experimental">Experimental</span>
-        </div>
-        <div class="signal-item">
-            <span class="label">Urgency</span>
-            <span class="badge badge-mixed">0.31</span>
-        </div>
-        <div class="signal-item">
-            <span class="label">Churn Risk</span>
-            <span class="badge badge-success">0.10</span>
+        <div class="demo-card">
+            <div class="signal-list">
+                <div class="signal-row"><span class="label">Sentiment</span><span class="badge badge-active">0.72</span></div>
+                <div class="signal-row"><span class="label">Toxicity</span><span class="badge badge-success">0.04</span></div>
+                <div class="signal-row"><span class="label">Sarcasm</span><span class="badge badge-experimental">Experimental</span></div>
+                <div class="signal-row"><span class="label">Urgency</span><span class="badge badge-mixed">0.31</span></div>
+                <div class="signal-row"><span class="label">Churn Risk</span><span class="badge badge-success">0.10</span></div>
+            </div>
         </div>
     </div>
-    <div class="feature-text">
-        <h2>Operational Radar Signals</h2>
-        <p>A unified 5-axis signal output that helps you route support tickets or moderate user content automatically.</p>
-    </div>
-</section>
 
-<section class="feature-section">
-    <div class="feature-text">
-        <h2>Aspect-Based Sentiment & Spam</h2>
-        <p>Extract which specific product features users are talking about and how they feel about them. Plus, a lightweight spam classifier protects your downstream processes.</p>
-    </div>
-    <div class="demo-card">
-        <div class="text">&ldquo;The delivery was incredibly slow, but the product is fantastic.&rdquo;</div>
-        <div style="background: var(--bg); padding: 10px 12px; margin-bottom: 8px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px;">
-            <strong>delivery</strong> <span class="badge badge-error" style="float: right;">Negative</span>
+    <div class="feature-row">
+        <div class="feature-text">
+            <h2>Aspect Sentiment & Spam</h2>
+            <p>Extract which product features users mention and how they feel. Flag spam before it reaches downstream systems.</p>
         </div>
-        <div style="background: var(--bg); padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px;">
-            <strong>product</strong> <span class="badge badge-active" style="float: right;">Positive</span>
+        <div class="demo-card">
+            <div class="text">&ldquo;The delivery was slow, but the product is fantastic.&rdquo;</div>
+            <div class="absa-list">
+                <div class="absa-item"><strong>delivery</strong><span class="badge badge-error">Negative</span></div>
+                <div class="absa-item"><strong>product</strong><span class="badge badge-active">Positive</span></div>
+            </div>
         </div>
     </div>
-</section>
+</div>
 
 <div class="cta-section">
-    <h2>Ready to test it?</h2>
-    <a href="/app" class="btn" style="font-size: 1rem; padding: 12px 28px;">Open the Analyzer</a>
+    <p>English text, up to 5,000 characters. No API key required.</p>
+    <a href="/app" class="btn">Open the Analyzer</a>
 </div>
 {% endblock %}

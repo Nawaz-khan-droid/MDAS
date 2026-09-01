@@ -11,11 +11,18 @@ _LEXICON_PATH = None
 
 
 def _find_lexicon():
-    """Walk up directories to find VADER lexicon."""
+    """Find VADER lexicon — bundled copy first, then nltk_data search."""
     global _LEXICON_PATH
     if _LEXICON_PATH is not None:
         return _LEXICON_PATH
 
+    # 1. Bundled copy in same directory as this module
+    bundled = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vader_lexicon.zip')
+    if os.path.exists(bundled):
+        _LEXICON_PATH = bundled
+        return _LEXICON_PATH
+
+    # 2. Walk up looking for nltk_data
     current = os.path.dirname(os.path.abspath(__file__))
     for _ in range(6):
         candidate = os.path.join(current, 'nltk_data', 'sentiment', 'vader_lexicon.zip')
@@ -24,7 +31,7 @@ def _find_lexicon():
             return _LEXICON_PATH
         current = os.path.dirname(current)
     raise FileNotFoundError(
-        "VADER lexicon not found. Run: python -c \"import nltk; nltk.download('vader_lexicon')\""
+        "VADER lexicon not found. Expected at: src/mdas/analysis/vader_lexicon.zip"
     )
 
 

@@ -300,7 +300,7 @@
         <div class="panel" style="padding: 0; overflow: hidden;">
             <label for="textInput" style="display: block; padding: 14px 16px 0; font-size: 12px; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.06em;">Input Text</label>
             <form hx-post="/ui/analyze" hx-target="#analysis-results" hx-indicator="#loading">
-                <textarea id="textInput" name="text" placeholder="Paste or type text to analyze..." required maxlength="{{ max_text_length }}" oninput="document.getElementById('charCount').innerText = this.value.length;" aria-describedby="charCounter">{{ text|default('') }}</textarea>
+                <textarea id="textInput" name="text" placeholder="Paste or type text to analyze..." required maxlength="{{ max_text_length }}" oninput="document.getElementById('charCount').innerText = this.value.length;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){this.closest('form').dispatchEvent(new Event('submit',{cancelable:true}));}" aria-describedby="charCounter">{{ text|default('') }}</textarea>
                 <div class="input-tools">
                     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                         <span id="charCounter" aria-live="polite" style="font-variant-numeric: tabular-nums;"><span id="charCount">0</span> / {{ max_text_length }}</span>

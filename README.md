@@ -1,72 +1,145 @@
-# MDAS — Multi-Dimensional Analysis System
+# MDAS — Multidimensional Text Analysis System
 
-MDAS is a modular-monolith NLP microservice that provides deep structural and semantic understanding of English text. It goes beyond simple document classification to understand **what each clause is doing**, extracting grammatical evidence for active, passive, and linking constructions.
+MDAS provides clause-level voice analysis, radar signals, ABSA, sentiment, and spam classification via a REST API. No API key is required for local or open deployment testing.
 
-## Live Demo
+## Limits
 
-**https://mdas-0x3n.onrender.com**
+- Maximum payload: 5,000 characters (hard-capped to preserve the 512 MB memory boundary for free-tier deployments).
+- Only English text is supported in the MVP.
+- No authentication required.
 
-## Quick Start
+## Health Check
 
-```bash
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-uvicorn mdas.api.main:app --host 0.0.0.0 --port 8002
+```
+GET /api/v1/mdas/health
 ```
 
-Open `http://localhost:8002/` for the visual analyzer, or `http://localhost:8002/api-docs` for API documentation.
+Returns the current status and whether models are loaded.
+
+**Response (200 OK)**
+```json
+{
+  "status": "online",
+  "models_loaded": true
+}
+```
+
+## Analyze Text
+
+```
+POST /api/v1/mdas/analyze
+```
+
+**Request Body (JSON)**
+```json
+{
+  "text": "The customer opened the package, and the item was returned."
+}
+```
+
+**Example cURL**
+```bash
+curl -X POST https://mdas-0x3n.onrender.com/api/v1/mdas/analyze \
+     -H "Content-Type: application/json" \
+     -d '{"text": "The customer opened the package."}'
+```
+
+**Response (200 OK)**
+```json
+{
+  "analysis_id": "uuid",
+  "status": "success",
+  "language": {
+    "code": "en",
+    "label": "English"
+  },
+  "statistics": {
+    "words": 6,
+    "characters": 30,
+    "sentences": 1,
+    "tokens": 7,
+    "paragraphs": 1,
+    "reading_time": "< 1 min"
+  },
+  "linguistics": {
+    "voice": {
+      "summary_label": "active",
+      "method": "dependency_rules",
+      "sentences": [
+        {
+          "text": "The customer opened the package",
+          "label": "active",
+          "evidence": {
+            "subject": "customer",
+            "verb": "opened",
+            "object": "package",
+            "text": "customer opened package"
+          }
+        }
+      ]
+    },
+    "entities": []
+  },
+  "sentiment": {
+    "label": "neutral",
+    "score": 0.0,
+    "method": "lexicon_rules"
+  },
+  "radar": {
+    "sentiment": 0.5,
+    "toxicity": 0.0,
+    "sarcasm": 0.0,
+    "urgency": 0.1,
+    "churn_risk": 0.1
+  },
+  "spam": {
+    "label": "ham",
+    "confidence": 0.0,
+    "method": "tfidf_linear_svc",
+    "model_version": "v1"
+  },
+  "absa": []
+}
+```
+
+## Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | VALIDATION_FAILED | JSON validation failure, empty text, or unsupported language. |
+| 400 | BAD_REQUEST | Text field is empty or missing. |
+| 413 | PAYLOAD_TOO_LARGE | Text exceeds the 5,000 character limit. |
+| 429 | RATE_LIMITED | Too many requests (30/min per IP). |
+| 500 | ANALYSIS_FAILED | Analysis service unavailable or internal failure. |
 
 ## Features
 
-### P0: Clause-Level Voice Analysis
-The core capability. MDAS parses sentences into individual clauses and classifies each predicate:
-- **Active** — tracks subjects, verbs, and objects
-- **Passive** — identifies agentive and agentless passives, parsing auxiliaries and main verbs
-- **Linking** — identifies copular verbs and predicate complements
+### Voice Analysis
+Clause-level Active / Passive / Linking classification with grammatical evidence extraction.
 
-Every clause includes extracted grammatical evidence: Subject, Verb, Object, Auxiliary, Agent, Copula, Complement.
+Evidence fields: Subject, Verb, Auxiliary, Object, Agent, Copula, Complement
 
-### P1: Operational Radar Signals
-A normalized (0.0–1.0) 5-axis signal output for downstream routing:
-| Signal | Method |
-|--------|--------|
-| Sentiment | Lexicon-based compound polarity |
-| Toxicity | Lexical harmful language detection |
-| Sarcasm | Experimental / heuristic only |
-| Urgency | Keyword + sentiment signal |
-| Churn Risk | Cancellation intent signals |
+Each clause includes the source text and a classification label. The summary_label is active, passive, linking, or mixed.
 
-### P1: Aspect-Based Sentiment Analysis (ABSA)
-Extracts explicit aspects (e.g., "packaging", "delivery") and their descriptive modifiers, assigning sentiment polarity per aspect.
+### Radar Signals
+Normalized 0.0–1.0 signal strengths:
 
-### P2: Spam Detection
-TF-IDF + LinearSVC classifier trained for ham/spam detection with a conservative false-positive rate.
+- **Sentiment** — Lexicon-based compound polarity, normalized to 0–1
+- **Toxicity** — Lexical harmful language detection
+- **Sarcasm** — Experimental / heuristic only (not a classifier output)
+- **Urgency** — Keyword + sentiment signal
+- **Churn Risk** — Cancellation intent signals
 
-### Language & Statistics
-Word count, sentence count, token count, reading time, and language detection.
+### ABSA
+Aspect-Based Sentiment Analysis using linguistic dependency patterns. Returns aspect-descriptor pairs with polarity (Positive / Negative / Neutral).
 
-## API
+### Spam
+TF-IDF + LinearSVC classifier. Returns label: ham or spam.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/v1/mdas/health` | GET | Health check — returns `{"status":"online","models_loaded":true}` |
-| `POST /api/v1/mdas/analyze` | POST | Full analysis (requires `text` field, max 5000 chars) |
+### Sentiment
+Lightweight lexicon-based sentiment analysis. Returns positive, negative, or neutral with a compound score from −1 to +1.
 
-**Request:**
-```json
-{ "text": "The customer opened the package." }
-```
-
-**Response includes:** language, statistics, voice (per clause), sentiment, radar signals, ABSA, spam classification.
-
-**Error codes:**
-| Status | Code | Meaning |
-|--------|------|---------|
-| 400 | `VALIDATION_FAILED` | Empty, malformed, or unsupported language |
-| 413 | `PAYLOAD_TOO_LARGE` | Text exceeds 5,000 characters |
-| 429 | `RATE_LIMITED` | Too many requests (30/min per IP) |
-| 500 | `ANALYSIS_FAILED` | Internal processing error |
-| 503 | `SERVICE_UNAVAILABLE` | Engine not loaded |
+> **Note:** The sarcasm radar signal is experimental and heuristic-based. It is not a trained classifier output. Do not rely on it for production decisions.
 
 ## Web UI
 
@@ -76,44 +149,12 @@ Word count, sentence count, token count, reading time, and language detection.
 | `/app` | Text analyzer (HTMX) |
 | `/api-docs` | API documentation |
 
-## Security
-
-See [SECURITY.md](SECURITY.md) for full audit details.
-
-- Rate limiting: 30 requests per minute per IP
-- HSTS + security headers on all responses
-- Input validation: Pydantic schema enforcement, max 5,000 chars
-- No stack traces returned to clients
-- No secrets or credentials in repository
-
 ## Deployment
 
-MDAS is designed for **Render Free Tier (512 MB)**. Key constraints:
-- **Hard input limit:** 5,000 characters (rejects with HTTP 413)
-- **Language:** English only (non-English returns HTTP 400)
-- **Memory:** ~11 MB baseline, stable under load
-
-For larger documents, chunk text by paragraph before sending.
+MDAS runs on Render Free Tier (512 MB). See `render.yaml` for build and start commands.
 
 ## Testing
 
 ```bash
 PYTHONPATH=src pytest tests/
 ```
-
-## Project Structure
-
-```
-src/mdas/
-├── api/            # FastAPI routes, schemas, middleware
-├── application/    # Analysis service (orchestrator)
-├── analysis/       # Voice, sentiment, signals, statistics, ABSA
-├── classification/ # Spam classifier, registry
-├── core/           # Constants, errors
-├── nlp/            # spaCy backend
-└── templates/      # Jinja2 + HTMX UI
-```
-
-## License
-
-See repository for license details.

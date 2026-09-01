@@ -283,7 +283,7 @@
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
 
-    .section-heading {
+    .section-heading, .panel .section-heading {
         margin: 0 0 14px;
         font-size: 13px;
         font-weight: 600;
@@ -359,7 +359,7 @@
         <!-- Voice Analysis -->
         <section aria-labelledby="voice-heading" style="margin-bottom: 24px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                <h3 id="voice-heading" style="margin: 0; font-size: 15px; font-weight: 700;">Voice Analysis</h3>
+                <h3 id="voice-heading" class="section-heading" style="margin: 0;">Voice Analysis</h3>
                 <span style="font-size: 12px; color: var(--fg-muted); font-weight: 500;">{{ linguistics.voice.sentences|length }} clause{{ 's' if linguistics.voice.sentences|length != 1 }}</span>
                 {% if linguistics.voice.summary_label == 'mixed' %}
                 <span class="badge badge-mixed">Mixed</span>
@@ -398,7 +398,7 @@
         <!-- Radar + ABSA -->
         <div class="two-col" style="margin-bottom: 16px;">
             <section class="panel" aria-labelledby="radar-heading">
-                <h3 id="radar-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Radar Signals</h3>
+                <h3 id="radar-heading" class="section-heading" style="margin: 0 0 12px;">Radar Signals</h3>
                 <div class="radar-wrap">
                     <canvas id="radarChart" width="480" height="480" aria-label="Radar chart showing sentiment, toxicity, sarcasm, urgency, and churn risk" role="img"></canvas>
                 </div>
@@ -427,7 +427,7 @@
             </section>
 
             <section class="panel" aria-labelledby="absa-heading">
-                <h3 id="absa-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Aspect-Based Sentiment</h3>
+                <h3 id="absa-heading" class="section-heading" style="margin: 0 0 12px;">Aspect-Based Sentiment</h3>
                 {% if absa %}
                 <table class="absa-table">
                     <thead><tr><th>Aspect</th><th>Sentiment</th></tr></thead>
@@ -449,7 +449,7 @@
         <!-- Spam + Stats -->
         <div class="two-col" style="margin-bottom: 24px;">
             <section class="panel" aria-labelledby="spam-heading">
-                <h3 id="spam-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Spam Check</h3>
+                <h3 id="spam-heading" class="section-heading" style="margin: 0 0 12px;">Spam Check</h3>
                 <div class="spam-result {{ 'spam-ham' if spam.label == 'ham' else 'spam-spam' }}">
                     <span class="spam-dot" aria-hidden="true"></span>
                     <span>{{ spam.label|upper }}</span>
@@ -458,7 +458,7 @@
             </section>
 
             <section class="panel" aria-labelledby="stats-heading">
-                <h3 id="stats-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Language & Statistics</h3>
+                <h3 id="stats-heading" class="section-heading" style="margin: 0 0 12px;">Language & Statistics</h3>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Language</div>

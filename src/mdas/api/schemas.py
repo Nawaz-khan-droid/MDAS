@@ -33,7 +33,7 @@ class ClassificationCandidate(BaseModel):
 
 class ClassificationResult(BaseModel):
     label: str
-    confidence: float
+    confidence: Optional[float] = None
     method: str
     model_version: str
     candidates: List[ClassificationCandidate] = []

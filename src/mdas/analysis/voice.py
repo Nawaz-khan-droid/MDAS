@@ -1,8 +1,14 @@
 """Accurate clause-level English active/passive/linking voice analysis."""
 
 def get_clause_bounds(head, sent):
-    # Get all tokens in the subtree of the head that belong to this sentence
-    tokens = [t for t in head.subtree if t.i >= sent.start and t.i < sent.end]
+    # Exclude conj and complement clause subtrees — they are separate clauses
+    exclude_indices = set()
+    for t in head.subtree:
+        if t.dep_ in {"conj", "ccomp", "xcomp"} and t.i != head.i:
+            for ct in t.subtree:
+                exclude_indices.add(ct.i)
+
+    tokens = [t for t in head.subtree if t.i >= sent.start and t.i < sent.end and t.i not in exclude_indices]
     if not tokens:
         return sent.start, sent.end - 1
         
@@ -98,7 +104,9 @@ def _analyze_clauses(sent, start_id):
         # Find conjunct verbs sharing this subject
         for child in head.children:
             if child.dep_ == "conj" and child.pos_ in {"VERB", "AUX"}:
-                head_to_subj.append((child, subj))
+                # Only pair if the subject belongs to this conj verb
+                if subj.i in {t.i for t in child.subtree}:
+                    head_to_subj.append((child, subj))
                 
     for head, subj in head_to_subj:
         is_passive = False
@@ -113,7 +121,9 @@ def _analyze_clauses(sent, start_id):
         if head.dep_ == "conj":
             ancestor = head.head
             if any(c.dep_ in {"auxpass", "aux:pass"} for c in ancestor.children):
-                shared_auxpass = True
+                # Only share if the conj verb is also a passive participle (VBN)
+                if head.tag_ == "VBN" or any(c.dep_ in {"auxpass", "aux:pass"} for c in head.children):
+                    shared_auxpass = True
 
         if subj.dep_ in {"nsubjpass", "csubjpass"}:
             is_passive = True
@@ -180,6 +190,17 @@ def _analyze_clauses(sent, start_id):
         
     return clauses
 
+def _deduplicate_clauses(clauses):
+    """Remove duplicate clauses that share the same text."""
+    seen = set()
+    unique = []
+    for clause in clauses:
+        text = clause["text"].strip()
+        if text not in seen:
+            seen.add(text)
+            unique.append(clause)
+    return unique
+
 def analyze_voice(doc):
     segments = []
     current_id = 1
@@ -188,6 +209,8 @@ def analyze_voice(doc):
         segments.extend(clauses)
         current_id += len(clauses)
         
+    segments = _deduplicate_clauses(segments)
+    
     counts = {"active": 0, "passive": 0, "linking": 0, "uncertain": 0}
     for item in segments:
         counts[item["voice"].lower()] += 1

@@ -225,6 +225,13 @@ class AnalysisService:
                     aspect = chunk_map.get(subj.i, subj.text.lower())
                     descriptor = token.text.lower()
                     
+            # Pattern 3: Passive participle (e.g. "box was torn")
+            elif token.tag_ == "VBN" and any(c.dep_ in {"auxpass", "aux:pass"} for c in token.children):
+                subj = next((w for w in token.children if w.dep_ in {"nsubjpass"}), None)
+                if subj and subj.pos_ in {"NOUN", "PROPN"}:
+                    aspect = chunk_map.get(subj.i, subj.text.lower())
+                    descriptor = token.text.lower()
+                    
             if aspect and descriptor:
                 # determine polarity
                 desc_score = vader_polarity_scores(descriptor)["compound"]
@@ -233,8 +240,8 @@ class AnalysisService:
                 else: polarity = "Neutral"
                 
                 # manual overrides for domain words
-                if descriptor in {"torn", "broken", "broke", "error", "fail", "terrible", "crashed"}: polarity = "Negative"
-                if descriptor in {"excellent", "great", "awesome", "perfect", "good"}: polarity = "Positive"
+                if descriptor in {"torn", "broken", "broke", "error", "fail", "terrible", "crashed", "worn", "damaged", "scratched", "dented", "soiled", "stained"}: polarity = "Negative"
+                if descriptor in {"excellent", "great", "awesome", "perfect", "good", "new", "clean", "fast", "smooth"}: polarity = "Positive"
                 
                 if not any(a["aspect"] == aspect and a["descriptor"] == descriptor for a in absa_results):
                     absa_results.append({

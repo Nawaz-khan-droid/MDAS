@@ -2,11 +2,12 @@
   "model_name": "spam",
   "domain": "generic",
   "type": "tfidf_linearsvc",
-  "accuracy": 0.7981,
+  "accuracy": 0.8353,
   "precision": 1.0,
   "recall": 1.0,
   "f1": 1.0,
   "fpr": 0.0,
-  "training_samples": 119,
-  "vocabulary_size": 729
+  "training_samples": 123,
+  "test_samples": 45,
+  "vocabulary_size": 760
 }

@@ -1,103 +1,78 @@
-# MDAS — Multi-Dimensional Analysis System
+# MDAS � Multi-Dimensional Analysis System
 
-A modular-monolith Python codebase for English text analysis. It separates:
+MDAS is a modular-monolith NLP microservice designed to provide deep structural and semantic understanding of English text. It goes beyond simple document classification to understand **what each clause is doing**, extracting grammatical evidence for active, passive, and linking constructions.
 
-1. Text statistics
-2. Linguistic analysis
-3. Classification
-4. Five-axis MDAS radar signals
-5. Structured JSON inference
-6. Optional HTTP API
+## Core MVP Features
 
-It is intentionally **not an LLM application**.
+MDAS is currently locked for its MVP release with a strict focus on grammatical and semantic visibility.
 
-## What was retained and fixed from the supplied Colab code
+### 1. P0: Clause-Level Voice Analysis (Primary Capability)
+Unlike simple binary document classifiers, MDAS parses sentences into individual clauses and evaluates each predicate:
+* **Active**: Tracks subjects, verbs, and objects.
+* **Passive**: Identifies both agentive and agentless passives, parsing auxiliaries and main verbs.
+* **Linking**: Identifies copular verbs and predicate complements (e.g., "The packaging was excellent").
+* **Evidence**: Extracts the exact text spans corresponding to the Subject, Verb, Object, Auxiliary, Agent, Copula, and Complement for every predicted clause.
 
-The existing MTAS notebook already had separate models for spam, sentiment, intent and content category, a reusable training function, spaCy entity extraction, and a unified inference function. It also contained repeated dataset-loading/training blocks and repeated function definitions; those are consolidated here. The original cleaning step also removed URLs and all non-letter characters before inference, which is inappropriate when later analysis needs IDs, email addresses, money, punctuation or urgency cues. MDAS keeps the raw text for linguistic analysis and uses model pipelines independently.
+### 2. P1: Aspect-Based Sentiment Analysis (ABSA)
+Identifies explicit aspects (e.g., "packaging", "delivery") and their descriptive modifiers, assigning a sentiment score directly to the aspect based on context.
 
-The voice notebook used a tiny hand-written Active/Passive dataset and TF-IDF over POS-tag strings with Naive Bayes. MDAS does **not** use that as the production voice detector. Voice is analyzed sentence-by-sentence from dependency/morphological structure and can return `Uncertain` instead of forcing a binary answer.
+### 3. P1: Operational Radar Signals
+Provides a normalized (0.0 to 1.0) 5-axis signal output for:
+* **Sentiment**: Overall document polarity.
+* **Toxicity**: Detection of harmful or aggressive language.
+* **Sarcasm**: (Experimental/Future Scope)
+* **Urgency**: Algorithmic assessment based on keywords, sentiment, and churn presence.
+* **Churn Risk**: Signals indicating intent to cancel or leave.
 
-## Scope
+### 4. P2: Spam Detection
+A lightweight, pure Scikit-Learn (TF-IDF + LinearSVC) classifier trained specifically for ham/spam detection with a highly conservative false-positive rate.
 
-V1 targets **English**. The supplied classification datasets are customer/support/social-domain datasets, so the resulting classifiers must be described as domain-specific rather than universal English classifiers. Moderation and document-type classification are deliberately data-driven extensions: they require your own labeled CSVs because the correct taxonomy is project-specific.
+---
 
-Radar axes:
+## Future Scope (Archived Features)
 
-- sentiment
-- urgency
-- churn risk
-- toxicity
-- sarcasm
+To meet the strict memory constraints of the MVP deployment environment, the following experimental and heavy models have been explicitly excluded from the production inference path and archived:
+* **Intent Classification**: Temporarily removed.
+* **Transformers (MiniLM/PyTorch)**: Stripped from the runtime to save ~300MB+ of resident RAM.
+* **Topic/Category Classification**: Archived.
 
-Radar values are normalized signal strengths from `0.0` to `1.0`; they are **not automatically probabilities**.
+## Input Limits & Render Free Limitations
 
-## NLP Suite relationship
+Because MDAS is deployed on a **512 MB Render Free Tier**, memory footprint (Resident Set Size) is strictly managed.
+* The spaCy dependency parser requires significant memory for very large documents.
+* **Hard Input Limit**: The API will reject inputs exceeding **5,000 characters**.
+* For larger documents, clients must chunk text by paragraph before sending it to MDAS.
 
-NLP Suite is a separate open-source desktop application. Its documentation covers tokenization, lemmatization, POS, NER, dependency parsing, SVO and sentiment among other tools, and describes Stanza as its recommended pure-Python NLP package.
+## Supported Language
 
-MDAS therefore provides a backend seam:
+MDAS currently supports **English** only. It will return an HTTP 400 `unsupported_language` error if it detects non-English text.
 
-- spaCy backend: default because it matches the supplied Colab work.
-- Stanza backend: optional, useful for alignment with the NLP stack used/recommended by NLP Suite.
-- MDAS does not import NLP Suite GUI/private internals. That would make the application dependent on an unstable application-internal API.
+## API Usage
 
-The `integrations/nlp_suite.py` module is the explicit boundary if you later decide to reuse a particular NLP Suite implementation.
-
-## Install
-
+Start the server:
 ```bash
-python -m venv .venv
-# Windows: .venv\\Scripts\\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -e .
-python -m spacy download en_core_web_sm
+python -m src.mdas.api.main
 ```
 
-Optional Stanza:
-
+Or via Uvicorn:
 ```bash
-pip install -e ".[stanza]"
-python -c "import stanza; stanza.download('en')"
+uvicorn src.mdas.api.main:app --host 0.0.0.0 --port 8002
 ```
 
-## Training data
-
-The project does not silently bundle third-party datasets. Put the datasets described in `data/raw/README.md` into that directory, then run:
-
+**cURL Example:**
 ```bash
-python -m mdas.training.train --data-dir data/raw --output-dir models
-```
-
-The trainer uses TF-IDF + LogisticRegression, preserves an untouched test split, reports macro-F1, and stores model metadata beside each artifact.
-
-## Python API
-
-```python
-from mdas import MDASAnalyzer
-
-analyzer = MDASAnalyzer.from_directory("models")
-result = analyzer.analyze(
-    "Oh great, another outage. Fix this immediately or cancel our subscription."
-)
-print(result.to_dict())
-```
-
-## HTTP API
-
-```bash
-uvicorn mdas.api.app:app --reload
-```
-
-No API key is implemented in this project. This is suitable for a local/project deployment; add authentication/rate limiting before exposing it publicly.
-
-```bash
-curl -X POST http://127.0.0.1:8000/v1/analyze \
+curl -X POST http://127.0.0.1:8002/api/v1/analyze \
   -H "Content-Type: application/json" \
-  -d '{"text":"My order is late. Please fix this immediately."}'
+  -d '{"text":"The customer opened the package, and the item was returned."}'
 ```
 
-## Large text
+**HTMX UI:**
+Navigate to `http://127.0.0.1:8002/` to use the built-in visual analyzer.
 
-Default maximum input is 250,000 characters. Linguistic analysis is sentence-level, so a document can contain both active and passive sentences. The API returns a document summary plus detailed sentence/token/entity records. A frontend should paginate/expand details rather than rendering every record at once.
+## Testing & Benchmarks
 
-For documents larger than the configured limit, chunk them at the application boundary on paragraph/sentence boundaries and aggregate the returned summaries.
+Run the test suite and Voice benchmark:
+```bash
+$env:PYTHONPATH="src"
+python scratch/run_voice_benchmark.py
+```

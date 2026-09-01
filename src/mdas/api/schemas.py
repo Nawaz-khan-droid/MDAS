@@ -1,5 +1,6 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+from mdas.core.constants import MAX_TEXT_LENGTH
 
 class LanguageResult(BaseModel):
     code: str
@@ -70,17 +71,12 @@ class AspectResult(BaseModel):
     descriptor: str
     sentiment: str
 
-class UrgencyResult(BaseModel):
-    label: str
-    score: float
-    method: str
-    evidence: List[str] = Field(default_factory=list)
-
-class ChurnResult(BaseModel):
-    label: str
-    score: float
-    method: str
-    evidence: List[str] = Field(default_factory=list)
+class RadarSignals(BaseModel):
+    sentiment: float
+    urgency: float
+    churn_risk: float
+    sarcasm: float
+    toxicity: float
 
 class AnalysisResponse(BaseModel):
     analysis_id: str
@@ -90,13 +86,11 @@ class AnalysisResponse(BaseModel):
     linguistics: LinguisticsResult
     sentiment: SentimentResult
     spam: ClassificationResult
-    intent: ClassificationResult
     absa: List[AspectResult] = Field(default_factory=list)
-    urgency: UrgencyResult
-    churn: ChurnResult
+    radar: RadarSignals
 
 class AnalysisRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=50000)
+    text: str = Field(..., min_length=1, max_length=MAX_TEXT_LENGTH)
 
 class CapabilitiesResponse(BaseModel):
     language: List[str]

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    .hero { text-align: center; margin: 48px 0 72px; }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; margin: 0 0 16px; color: var(--fg); letter-spacing: -0.025em; line-height: 1.15; }
+    .hero .subtitle { font-size: 1.05rem; color: var(--fg-muted); max-width: 640px; margin: 0 auto 28px; line-height: 1.6; }
+    .hero-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    .feature-section {
+        margin-bottom: 56px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        align-items: center;
+    }
+    .feature-section.reversed { direction: rtl; }
+    .feature-section.reversed > * { direction: ltr; }
+    .feature-text h2 { font-size: 1.35rem; margin: 0 0 10px; color: var(--fg); }
+    .feature-text p { font-size: 0.95rem; color: var(--fg-muted); margin: 0 0 14px; line-height: 1.6; }
+
+    .demo-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        font-family: inherit;
+    }
+    .demo-card .tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .demo-card .text { color: var(--fg); margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; }
+    .demo-card .evidence { font-size: 13px; }
+    .demo-card .evidence dt { font-weight: 600; color: var(--fg-muted); margin-top: 4px; }
+    .demo-card .evidence dd { margin: 0 0 0 12px; font-weight: 500; }
+
+    .signal-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+    }
+    .signal-item:last-child { border-bottom: none; }
+    .signal-item .label { font-weight: 500; color: var(--fg-muted); }
+
+    .cta-section {
+        text-align: center;
+        padding: 48px 0;
+        border-top: 1px solid var(--border);
+    }
+    .cta-section h2 { font-size: 1.4rem; margin: 0 0 18px; color: var(--fg); }
+
+    @media (max-width: 768px) {
+        .feature-section, .feature-section.reversed { grid-template-columns: 1fr; direction: ltr; }
+        .hero h1 { font-size: 1.7rem; }
+        .hero .subtitle { font-size: 0.95rem; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+    <h1>Understand what each clause is doing.</h1>
+    <div class="subtitle">Analyze Active, Passive, and Linking voice at the clause level with structured linguistic evidence, alongside radar signals, ABSA, sentiment, and spam analysis.</div>
+    <div class="hero-actions">
+        <a href="/app" class="btn">Analyze Text</a>
+        <a href="/api-docs" class="btn btn-outline">API Docs</a>
+    </div>
+</div>
+
+<section class="feature-section">
+    <div class="feature-text">
+        <h2>Clause-Level Voice Analysis</h2>
+        <p>MDAS segments your text into individual clauses and identifies Active, Passive, and Linking structures with exact grammatical evidence.</p>
+    </div>
+    <div class="demo-card">
+        <span class="tag" style="background: var(--voice-passive-bg); color: var(--voice-passive-text);">PASSIVE</span>
+        <div class="text">&ldquo;The package was delivered by the courier.&rdquo;</div>
+        <dl class="evidence">
+            <dt>Subject</dt><dd>package</dd>
+            <dt>Auxiliary</dt><dd>was</dd>
+            <dt>Verb</dt><dd>delivered</dd>
+            <dt>Agent</dt><dd>courier</dd>
+        </dl>
+    </div>
+</section>
+
+<section class="feature-section reversed">
+    <div class="demo-card">
+        <div class="signal-item">
+            <span class="label">Sentiment</span>
+            <span class="badge badge-active">0.72</span>
+        </div>
+        <div class="signal-item">
+            <span class="label">Toxicity</span>
+            <span class="badge badge-success">0.04</span>
+        </div>
+        <div class="signal-item">
+            <span class="label">Sarcasm</span>
+            <span class="badge badge-experimental">Experimental</span>
+        </div>
+        <div class="signal-item">
+            <span class="label">Urgency</span>
+            <span class="badge badge-mixed">0.31</span>
+        </div>
+        <div class="signal-item">
+            <span class="label">Churn Risk</span>
+            <span class="badge badge-success">0.10</span>
+        </div>
+    </div>
+    <div class="feature-text">
+        <h2>Operational Radar Signals</h2>
+        <p>A unified 5-axis signal output that helps you route support tickets or moderate user content automatically.</p>
+    </div>
+</section>
+
+<section class="feature-section">
+    <div class="feature-text">
+        <h2>Aspect-Based Sentiment & Spam</h2>
+        <p>Extract which specific product features users are talking about and how they feel about them. Plus, a lightweight spam classifier protects your downstream processes.</p>
+    </div>
+    <div class="demo-card">
+        <div class="text">&ldquo;The delivery was incredibly slow, but the product is fantastic.&rdquo;</div>
+        <div style="background: var(--bg); padding: 10px 12px; margin-bottom: 8px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px;">
+            <strong>delivery</strong> <span class="badge badge-error" style="float: right;">Negative</span>
+        </div>
+        <div style="background: var(--bg); padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px;">
+            <strong>product</strong> <span class="badge badge-active" style="float: right;">Positive</span>
+        </div>
+    </div>
+</section>
+
+<div class="cta-section">
+    <h2>Ready to test it?</h2>
+    <a href="/app" class="btn" style="font-size: 1rem; padding: 12px 28px;">Open the Analyzer</a>
+</div>
+{% endblock %}

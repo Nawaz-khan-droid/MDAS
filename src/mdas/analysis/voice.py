@@ -64,6 +64,15 @@ def extract_evidence(head, subj, is_imperative=False):
                     details["agent"] = gc.text
                     break
                     
+    # If this is a conj, it might share its aux with its head
+    if details["aux"] is None and head.dep_ == "conj":
+        ancestor = head.head
+        for c in ancestor.children:
+            if c.dep_ in {"aux", "auxpass"}:
+                details["aux"] = c.text
+                tokens.append(c)
+                break
+                
     if subj and subj == head:
         for c in subj.children:
              if c.dep_ in {"cop", "aux"}:
@@ -81,15 +90,34 @@ def _analyze_clauses(sent, start_id):
     # Find all distinct subjects in the sentence
     subjects = [t for t in sent if t.dep_ in {"nsubj", "nsubjpass", "csubj", "csubjpass", "expl"}]
     
+    # Map head verbs to their subjects, expanding to conjunct verbs
+    head_to_subj = []
     for subj in subjects:
         head = subj.head
+        head_to_subj.append((head, subj))
+        # Find conjunct verbs sharing this subject
+        for child in head.children:
+            if child.dep_ == "conj" and child.pos_ in {"VERB", "AUX"}:
+                head_to_subj.append((child, subj))
+                
+    for head, subj in head_to_subj:
         is_passive = False
         is_linking = False
         
-        # Passive Check
+        # Check if the verb itself is passive (e.g. from auxpass) or if it's a conj and its ancestor was passive
+        # Find auxpass for this verb
+        local_auxpass = any(c.dep_ in {"auxpass", "aux:pass"} for c in head.children)
+        
+        # If it's a conj, it might share the auxpass of its ancestor
+        shared_auxpass = False
+        if head.dep_ == "conj":
+            ancestor = head.head
+            if any(c.dep_ in {"auxpass", "aux:pass"} for c in ancestor.children):
+                shared_auxpass = True
+
         if subj.dep_ in {"nsubjpass", "csubjpass"}:
             is_passive = True
-        elif any(c.dep_ in {"auxpass", "aux:pass"} for c in head.children):
+        elif local_auxpass or shared_auxpass:
             is_passive = True
         elif head.tag_ == "VBN" and any(c.lemma_ in {"be", "get"} for c in head.children):
             is_passive = True
@@ -101,10 +129,15 @@ def _analyze_clauses(sent, start_id):
             elif head.lemma_ in {"be", "seem", "look", "appear", "feel", "become", "remain"} and any(c.dep_ in {"acomp", "attr"} for c in head.children):
                 is_linking = True
         else:
-            # Reclassify stative passives as Linking if they describe a state without an agent
-            stative_participles = {"damage", "break", "tear", "close", "lose"}
+            # Reclassify stative passives as Linking if they describe a state without an agent.
+            # We remove the present-tense restriction so past tense (was damaged) is correctly caught.
+            stative_participles = {
+                "damage", "break", "tear", "close", "lose", "corrupt",
+                "hurt", "ruin", "destroy", "crack", "scratch", "freeze",
+                "finish", "complete"
+            }
             has_agent = any(c.dep_ in {"agent", "obl:agent"} for c in head.children)
-            if not has_agent and head.lemma_ in stative_participles and any(c.lemma_ == "be" and c.tag_ in {"VBZ", "VBP"} for c in head.children):
+            if not has_agent and head.lemma_ in stative_participles and any(c.lemma_ in {"be", "become", "get"} for c in head.children):
                 is_passive = False
                 is_linking = True
                 

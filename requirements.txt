@@ -1,12 +1,12 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.13.0+cpu
+# Production dependencies for MDAS MVP
 numpy
 pandas
 scikit-learn
 joblib
 spacy
+fastapi
+uvicorn[standard]
+langdetect
+jinja2-fragments
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
-streamlit
-plotly
 -e .
-sentence-transformers>=3.0

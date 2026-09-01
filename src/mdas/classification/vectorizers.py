@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from sentence_transformers import SentenceTransformer
 
 class MiniLMVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, model_name="all-MiniLM-L6-v2"):
@@ -11,6 +10,7 @@ class MiniLMVectorizer(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         if self._model is None:
+            from sentence_transformers import SentenceTransformer
             self._model = SentenceTransformer(self.model_name)
         if isinstance(X, str):
             X = [X]

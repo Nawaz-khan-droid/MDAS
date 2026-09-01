@@ -2,27 +2,36 @@ from typing import Union
 from mdas.api.schemas import (
     AnalysisResponse, LanguageResult, StatisticsResult, LinguisticsResult, VoiceResult,
     EntityResult, ClassificationResult, SentimentResult,
-    UnsupportedLanguageResponse, AspectResult, UrgencyResult, ChurnResult
+    UnsupportedLanguageResponse, AspectResult, RadarSignals
 )
 from mdas.classification.registry import ModelRegistry
 from mdas.nlp.spacy_backend import SpacyBackend
 from mdas.analysis.language import detect_language
 from mdas.analysis.statistics import analyze_statistics
 from mdas.analysis.linguistics import analyze_linguistics
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from mdas.core.constants import MAX_TEXT_LENGTH
+from mdas.analysis.lightweight_sentiment import polarity_scores as vader_polarity_scores
 
 class AnalysisService:
-    def __init__(self, model_dir="models"):
+    def __init__(self, model_dir="models", allowed_tasks=None):
         # Note: Models are initialized here at startup, as required for single-server performance.
-        # The language gate prevents *execution* of these models on unsupported text.
+        # Phase 1: Explicitly load ONLY the required lightweight models.
+        if allowed_tasks is None:
+            # Re-enabled lightweight TF-IDF spam (zero PyTorch overhead)
+            allowed_tasks = ["spam"]
+            
         self.backend = SpacyBackend()
-        self.registry = ModelRegistry(model_dir)
-        self.sia = SentimentIntensityAnalyzer()
+        self.registry = ModelRegistry(model_dir, allowed_tasks=allowed_tasks)
+        # Lightweight sentiment - no NLTK dependency (saves ~110 MB memory)
 
     def analyze(self, text: str, analysis_id: str) -> Union[AnalysisResponse, UnsupportedLanguageResponse]:
         # 1. INPUT VALIDATION
         if not text or not text.strip():
             raise ValueError("Input text cannot be empty.")
+            
+        # Hard constraint on large inputs to avoid runaway parser behavior
+        if len(text) > MAX_TEXT_LENGTH:
+            raise ValueError(f"Text length ({len(text)}) exceeds maximum allowed ({MAX_TEXT_LENGTH} chars).")
 
         # 2. LANGUAGE DETECTION
         lang_detected = detect_language(text)
@@ -152,8 +161,8 @@ class AnalysisService:
         
         ling_res = LinguisticsResult(voice=voice_res, entities=mapped_entities)
 
-        # 7. SENTIMENT (VADER)
-        scores = self.sia.polarity_scores(text)
+        # 7. SENTIMENT (VADER-compatible lightweight)
+        scores = vader_polarity_scores(text)
         compound = scores["compound"]
         if compound >= 0.05:
             sent_label = "positive"
@@ -165,10 +174,10 @@ class AnalysisService:
         sent_res = SentimentResult(
             label=sent_label,
             score=compound,
-            method="vader"
+            method="lexicon_rules"
         )
         
-        # 8. CLASSIFICATION (Spam & Intent)
+        # 8. CLASSIFICATION (Spam Only - Intent is Future Scope)
         def predict_task(task_name):
             if self.registry.has(task_name):
                 try:
@@ -176,8 +185,8 @@ class AnalysisService:
                     if r.status == "ok" and r.label:
                         return ClassificationResult(
                             label=r.label,
-                            confidence=r.confidence or 0.0,
-                            method=r.method if hasattr(r, "method") and r.method else "legacy_model",
+                            confidence=r.confidence if r.confidence is not None else 0.0,
+                            method="tfidf_linear_svc",
                             model_version=r.model_version if hasattr(r, "model_version") and r.model_version else "v1"
                         )
                 except Exception as e:
@@ -187,27 +196,6 @@ class AnalysisService:
             return ClassificationResult(label="unknown", confidence=0.0, method="missing_model", model_version="unknown")
 
         spam_res = predict_task("spam")
-        
-        # Dual-Intent Architecture
-        intent_res = predict_task("intent")
-        intent_res.candidates = [{
-            "model": intent_res.method,
-            "label": intent_res.label,
-            "confidence": intent_res.confidence
-        }]
-        if self.registry.has("minilm_intent"):
-            minilm_res = predict_task("minilm_intent")
-            
-            intent_res.candidates.append({
-                "model": minilm_res.method,
-                "label": minilm_res.label,
-                "confidence": minilm_res.confidence
-            })
-            
-            if minilm_res.label != "unknown" and (intent_res.label == "unknown" or minilm_res.confidence > intent_res.confidence):
-                candidates = intent_res.candidates
-                intent_res = minilm_res
-                intent_res.candidates = candidates
 
         # 9. ABSA (Aspect-Based Sentiment Analysis)
         absa_results = []
@@ -238,7 +226,7 @@ class AnalysisService:
                     
             if aspect and descriptor:
                 # determine polarity
-                desc_score = self.sia.polarity_scores(descriptor)["compound"]
+                desc_score = vader_polarity_scores(descriptor)["compound"]
                 if desc_score >= 0.05: polarity = "Positive"
                 elif desc_score <= -0.05: polarity = "Negative"
                 else: polarity = "Neutral"
@@ -256,15 +244,13 @@ class AnalysisService:
 
         absa_res = [AspectResult(**a) for a in absa_results]
 
-        # 10. CHURN RISK
+        # 10. RADAR SIGNALS
+        # Churn Risk
         churn_keywords = {"cancel", "canceling", "cancelling", "refund", "quit", "leave", "unsubscribe", "close account"}
         churn_evidence = [t for t in text.lower().split() if any(k in t for k in churn_keywords)]
-        if churn_evidence:
-            churn_res = ChurnResult(label="high_risk", score=0.9, method="rules", evidence=churn_evidence)
-        else:
-            churn_res = ChurnResult(label="low_risk", score=0.1, method="rules", evidence=[])
-
-        # 11. URGENCY
+        churn_score = 0.9 if churn_evidence else 0.1
+        
+        # Urgency
         urgency_evidence = []
         if "ERROR" in text: urgency_evidence.append("ERROR keyword")
         if "!" in text: urgency_evidence.append("exclamation marks")
@@ -272,14 +258,25 @@ class AnalysisService:
         if sent_label == "negative": urgency_evidence.append("negative sentiment")
         
         is_urgent = (sent_label == "negative" and (len(urgency_evidence) >= 2)) or ("ERROR" in text)
-        urgency_res = UrgencyResult(
-            label="High Priority" if is_urgent else "Low Priority",
-            score=0.9 if is_urgent else 0.1,
-            method="rules",
-            evidence=urgency_evidence
+        urgency_score = 0.9 if is_urgent else 0.1
+        
+        # Sarcasm (Future Scope/Experimental)
+        sarcasm_score = 0.0
+        
+        # Toxicity
+        toxicity_keywords = {"idiot", "stupid", "dumb", "hate"}
+        is_toxic = any(k in text.lower() for k in toxicity_keywords)
+        toxicity_score = 0.8 if is_toxic else 0.0
+        
+        radar_res = RadarSignals(
+            sentiment=(compound + 1) / 2.0, # normalized 0 to 1
+            urgency=urgency_score,
+            churn_risk=churn_score,
+            sarcasm=sarcasm_score,
+            toxicity=toxicity_score
         )
 
-        # 12. UNIFIED AnalysisResult
+        # 11. UNIFIED AnalysisResult
         return AnalysisResponse(
             analysis_id=analysis_id,
             status="success",
@@ -288,8 +285,6 @@ class AnalysisService:
             linguistics=ling_res,
             sentiment=sent_res,
             spam=spam_res,
-            intent=intent_res,
             absa=absa_res,
-            urgency=urgency_res,
-            churn=churn_res
+            radar=radar_res
         )

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDAS — Clause-Level Text Analysis</title>
+    <meta name="description" content="Analyze Active, Passive, and Linking voice at the clause level with structured linguistic evidence, radar signals, ABSA, sentiment, and spam analysis.">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #f7f8fa;
+            --surface: #ffffff;
+            --surface-raised: #ffffff;
+            --fg: #111827;
+            --fg-muted: #6b7280;
+            --fg-faint: #9ca3af;
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --primary: #4338ca;
+            --primary-hover: #3730a3;
+            --primary-fg: #ffffff;
+            --ring: rgba(67, 56, 202, 0.25);
+
+            --voice-active-bg: #f0fdf4;
+            --voice-active-border: #16a34a;
+            --voice-active-text: #15803d;
+            --voice-passive-bg: #eff6ff;
+            --voice-passive-border: #2563eb;
+            --voice-passive-text: #1d4ed8;
+            --voice-linking-bg: #f5f3ff;
+            --voice-linking-border: #7c3aed;
+            --voice-linking-text: #6d28d9;
+            --voice-mixed-bg: #fffbeb;
+            --voice-mixed-border: #d97706;
+            --voice-mixed-text: #b45309;
+
+            --success: #15803d;
+            --success-bg: #f0fdf4;
+            --warning: #b45309;
+            --warning-bg: #fffbeb;
+            --error: #b91c1c;
+            --error-bg: #fef2f2;
+            --experimental: #6d28d9;
+            --experimental-bg: #f5f3ff;
+
+            --radius-sm: 3px;
+            --radius: 5px;
+            --radius-lg: 8px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        code, pre, kbd, samp, .mono {
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+        }
+
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: var(--radius-sm);
+        }
+
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--fg);
+            text-decoration: none;
+            letter-spacing: -0.025em;
+        }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--fg-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--primary-fg);
+            border: none;
+            padding: 9px 20px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn:disabled { background: var(--border); color: var(--fg-muted); cursor: not-allowed; }
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .btn-outline:hover { background: var(--primary); color: var(--primary-fg); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--fg-muted);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { border-color: var(--border-strong); color: var(--fg); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 3px 9px;
+            border-radius: var(--radius-sm);
+        }
+        .badge-active { background: var(--voice-active-bg); color: var(--voice-active-text); border: 1px solid var(--voice-active-border); }
+        .badge-passive { background: var(--voice-passive-bg); color: var(--voice-passive-text); border: 1px solid var(--voice-passive-border); }
+        .badge-linking { background: var(--voice-linking-bg); color: var(--voice-linking-text); border: 1px solid var(--voice-linking-border); }
+        .badge-mixed { background: var(--voice-mixed-bg); color: var(--voice-mixed-text); border: 1px solid var(--voice-mixed-border); }
+        .badge-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+        .badge-error { background: var(--error-bg); color: var(--error); border: 1px solid var(--error); }
+        .badge-experimental { background: var(--experimental-bg); color: var(--experimental); border: 1px solid var(--experimental); }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+        }
+        .panel h2, .panel h3 {
+            margin: 0 0 16px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--fg);
+        }
+
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-flex; }
+        .htmx-request.htmx-indicator { display: inline-flex; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        {%- block head %}{% endblock %}
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">MDAS</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/app">Analyzer</a>
+            <a href="/api-docs">API Docs</a>
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

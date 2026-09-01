@@ -1,9 +1,10 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from sentence_transformers import SentenceTransformer
-import numpy as np
+import os
+import joblib
 
 class DenseTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, model_name="all-MiniLM-L6-v2"):
+        # Lazy import to prevent PyTorch from loading in the P0 Voice engine memory budget
         self.model_name = model_name
         self._model = None
         

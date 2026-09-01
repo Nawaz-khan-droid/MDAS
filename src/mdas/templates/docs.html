@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    .docs-container { max-width: 800px; margin: 0 auto; }
+    .docs-container h1 { font-size: 2rem; margin: 0 0 8px; color: var(--fg); letter-spacing: -0.02em; }
+    .docs-container h2 {
+        margin-top: 40px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+        color: var(--fg);
+        font-size: 1.2rem;
+    }
+    .docs-container h3 { margin-top: 24px; color: var(--fg); font-size: 1rem; }
+    .docs-container p { font-size: 0.95rem; color: var(--fg-muted); line-height: 1.6; }
+    .docs-container ul { padding-left: 20px; margin: 12px 0; }
+    .docs-container li { font-size: 0.95rem; color: var(--fg-muted); line-height: 1.6; margin-bottom: 6px; }
+    .endpoint {
+        display: inline-block;
+        background: var(--bg);
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        font-family: monospace;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--fg);
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+    }
+    .method { color: var(--primary); margin-right: 10px; }
+    pre {
+        background: #111827;
+        color: #e5e7eb;
+        padding: 20px;
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        border: 1px solid #1f2937;
+    }
+    code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg); font-weight: 600; color: var(--fg-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-400 { background: var(--warning-bg); color: var(--warning); }
+    .status-413 { background: var(--error-bg); color: var(--error); }
+    .status-500 { background: var(--error-bg); color: var(--error); }
+    .note {
+        background: var(--experimental-bg);
+        border: 1px solid var(--experimental);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        font-size: 13px;
+        color: var(--experimental);
+        margin: 16px 0;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="docs-container">
+    <h1>API Documentation</h1>
+    <p>Integrate the MDAS Multidimensional Text Analysis System into your application.</p>
+
+    <h2>Overview</h2>
+    <p>MDAS provides clause-level voice analysis, radar signals, ABSA, sentiment, and spam classification via a REST API. No API key is required for local or open deployment testing.</p>
+
+    <h2>Limits</h2>
+    <ul>
+        <li>Maximum payload: <strong>5,000 characters</strong> (hard-capped to preserve the 512 MB memory boundary for free-tier deployments).</li>
+        <li>Only <strong>English</strong> text is supported in the MVP.</li>
+        <li>No authentication required.</li>
+    </ul>
+
+    <h2>Health Check</h2>
+    <div class="endpoint"><span class="method">GET</span>/api/v1/mdas/health</div>
+    <p>Returns the current status and whether models are loaded.</p>
+    <h3>Response (200 OK)</h3>
+    <pre><code>{
+  "status": "online",
+  "models_loaded": true
+}</code></pre>
+
+    <h2>Analyze Text</h2>
+    <div class="endpoint"><span class="method">POST</span>/api/v1/mdas/analyze</div>
+
+    <h3>Request Body (JSON)</h3>
+    <pre><code>{
+  "text": "The customer opened the package, and the item was returned."
+}</code></pre>
+
+    <h3>Example cURL</h3>
+    <pre><code>curl -X POST https://your-render-url.com/api/v1/mdas/analyze \
+     -H "Content-Type: application/json" \
+     -d '{"text": "The customer opened the package."}'</code></pre>
+
+    <h3>Response (200 OK)</h3>
+    <p>Returns the full multidimensional schema:</p>
+    <pre><code>{
+  "analysis_id": "uuid",
+  "status": "success",
+  "language": {
+    "code": "en",
+    "label": "English"
+  },
+  "statistics": {
+    "words": 6,
+    "characters": 30,
+    "sentences": 1,
+    "tokens": 7,
+    "paragraphs": 1,
+    "reading_time": "&lt; 1 min"
+  },
+  "linguistics": {
+    "voice": {
+      "summary_label": "active",
+      "method": "dependency_rules",
+      "sentences": [
+        {
+          "text": "The customer opened the package",
+          "label": "active",
+          "evidence": {
+            "subject": "customer",
+            "verb": "opened",
+            "object": "package",
+            "text": "customer opened package"
+          }
+        }
+      ]
+    },
+    "entities": []
+  },
+  "sentiment": {
+    "label": "neutral",
+    "score": 0.0,
+    "method": "lexicon_rules"
+  },
+  "radar": {
+    "sentiment": 0.5,
+    "toxicity": 0.0,
+    "sarcasm": 0.0,
+    "urgency": 0.1,
+    "churn_risk": 0.1
+  },
+  "spam": {
+    "label": "ham",
+    "confidence": 0.0,
+    "method": "tfidf_linear_svc",
+    "model_version": "v1"
+  },
+  "absa": []
+}</code></pre>
+
+    <h2>Error Responses</h2>
+    <table>
+        <tr><th>Status</th><th>Code</th><th>Description</th></tr>
+        <tr>
+            <td><span class="status-badge status-400">400</span></td>
+            <td><code>VALIDATION_FAILED</code></td>
+            <td>JSON validation failure, empty text, or unsupported language.</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-400">400</span></td>
+            <td><code>BAD_REQUEST</code></td>
+            <td>Text field is empty or missing.</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-413">413</span></td>
+            <td><code>PAYLOAD_TOO_LARGE</code></td>
+            <td>Text exceeds the 5,000 character limit.</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-500">500</span></td>
+            <td><code>ANALYSIS_FAILED</code></td>
+            <td>Analysis service unavailable or internal failure.</td>
+        </tr>
+    </table>
+
+    <h2>Voice Analysis</h2>
+    <p>Clause-level Active / Passive / Linking classification with grammatical evidence extraction.</p>
+    <p><strong>Evidence fields:</strong> Subject, Verb, Auxiliary, Object, Agent, Copula, Complement</p>
+    <p>Each clause includes the source text and a classification label. The <code>summary_label</code> is <code>active</code>, <code>passive</code>, <code>linking</code>, or <code>mixed</code>.</p>
+
+    <h2>Radar Signals</h2>
+    <p>Normalized 0.0&ndash;1.0 signal strengths:</p>
+    <ul>
+        <li><strong>Sentiment</strong> &mdash; Lexicon-based compound polarity, normalized to 0&ndash;1</li>
+        <li><strong>Toxicity</strong> &mdash; Lexical harmful language detection</li>
+        <li><strong>Sarcasm</strong> &mdash; Experimental / heuristic only (not a classifier output)</li>
+        <li><strong>Urgency</strong> &mdash; Keyword + sentiment signal</li>
+        <li><strong>Churn Risk</strong> &mdash; Cancellation intent signals</li>
+    </ul>
+
+    <h2>ABSA</h2>
+    <p>Aspect-Based Sentiment Analysis using linguistic dependency patterns. Returns aspect-descriptor pairs with polarity (Positive / Negative / Neutral).</p>
+
+    <h2>Spam</h2>
+    <p>TF-IDF + LinearSVC classifier. Returns label: <code>ham</code> or <code>spam</code>.</p>
+
+    <h2>Sentiment</h2>
+    <p>Lightweight lexicon-based sentiment analysis. Returns <code>positive</code>, <code>negative</code>, or <code>neutral</code> with a compound score from &minus;1 to +1.</p>
+
+    <div class="note">
+        <strong>Note:</strong> The <code>sarcasm</code> radar signal is experimental and heuristic-based. It is not a trained classifier output. Do not rely on it for production decisions.
+    </div>
+</div>
+{% endblock %}

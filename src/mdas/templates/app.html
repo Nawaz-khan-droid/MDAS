@@ -1,0 +1,593 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    .workspace { display: flex; flex-direction: column; gap: 24px; margin-top: 20px; }
+
+    textarea {
+        width: 100%;
+        min-height: 140px;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        font-size: 15px;
+        font-family: inherit;
+        resize: vertical;
+        box-sizing: border-box;
+        transition: border-color 0.15s;
+        line-height: 1.7;
+        color: var(--fg);
+        background: transparent;
+    }
+    textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+
+    .input-tools {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--fg-muted);
+        font-size: 12px;
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .error-banner {
+        background: var(--error-bg);
+        color: var(--error);
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        border: 1px solid var(--error);
+        font-weight: 500;
+        font-size: 13px;
+    }
+
+    .warning-banner {
+        background: var(--warning-bg);
+        color: var(--warning);
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        border: 1px solid var(--warning);
+        font-weight: 500;
+        font-size: 13px;
+    }
+
+    /* Preview / empty state */
+    .preview-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--fg-muted);
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+    }
+    .preview-empty .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+    .preview-empty h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--fg); }
+    .preview-empty p { margin: 0; font-size: 13px; max-width: 320px; line-height: 1.5; }
+
+    /* Overview cards */
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+    }
+    .overview-card {
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--surface);
+    }
+    .overview-card .label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--fg-muted);
+        margin-bottom: 4px;
+    }
+    .overview-card .value {
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    /* Voice Cards */
+    .voice-card {
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--border-strong);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .voice-card.active { background: var(--voice-active-bg); border-left-color: var(--voice-active-border); }
+    .voice-card.passive { background: var(--voice-passive-bg); border-left-color: var(--voice-passive-border); }
+    .voice-card.linking { background: var(--voice-linking-bg); border-left-color: var(--voice-linking-border); }
+    .voice-card.mixed { background: var(--voice-mixed-bg); border-left-color: var(--voice-mixed-border); }
+
+    .voice-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .voice-card-header .icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        color: #fff;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .voice-card.active .icon { background: var(--voice-active-border); }
+    .voice-card.passive .icon { background: var(--voice-passive-border); }
+    .voice-card.linking .icon { background: var(--voice-linking-border); }
+    .voice-card.mixed .icon { background: var(--voice-mixed-border); }
+
+    .voice-card-header .label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    .voice-card.active .label { color: var(--voice-active-text); }
+    .voice-card.passive .label { color: var(--voice-passive-text); }
+    .voice-card.linking .label { color: var(--voice-linking-text); }
+    .voice-card.mixed .label { color: var(--voice-mixed-text); }
+
+    .voice-card-header .clause-num {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--fg-faint);
+        font-weight: 500;
+    }
+
+    .voice-card blockquote {
+        margin: 0;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.6);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--fg);
+        font-style: italic;
+    }
+    .voice-card blockquote p { margin: 0; }
+
+    .evidence-grid {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 5px 16px;
+    }
+    .evidence-grid dt {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+        white-space: nowrap;
+        padding-top: 1px;
+    }
+    .voice-card.active .evidence-grid dt { color: var(--voice-active-text); }
+    .voice-card.passive .evidence-grid dt { color: var(--voice-passive-text); }
+    .voice-card.linking .evidence-grid dt { color: var(--voice-linking-text); }
+    .voice-card.mixed .evidence-grid dt { color: var(--voice-mixed-text); }
+
+    .evidence-grid dd {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    /* Radar */
+    .radar-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px 0;
+    }
+    .radar-wrap canvas {
+        display: block;
+        width: 240px;
+        height: 240px;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+    .signal-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+    }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-label { font-weight: 500; color: var(--fg-muted); }
+    .signal-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    /* ABSA */
+    .absa-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .absa-table th {
+        text-align: left;
+        padding: 4px 0 10px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-muted);
+        border-bottom: 1px solid var(--border);
+    }
+    .absa-table td {
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .absa-positive { color: var(--success); font-weight: 600; }
+    .absa-negative { color: var(--error); font-weight: 600; }
+    .absa-neutral { color: var(--fg-muted); font-weight: 600; }
+
+    /* Spam */
+    .spam-result {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: var(--radius);
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+    }
+    .spam-ham { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); }
+    .spam-spam { background: var(--error-bg); border: 1px solid var(--error); color: var(--error); }
+    .spam-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .spam-ham .spam-dot { background: var(--success); }
+    .spam-spam .spam-dot { background: var(--error); }
+
+    /* Stats */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+    }
+    .stat-item {
+        padding: 9px 11px;
+        background: var(--bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+    }
+    .stat-item .stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-muted);
+        margin-bottom: 2px;
+    }
+    .stat-item .stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+    .section-heading {
+        margin: 0 0 14px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg-muted);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="workspace">
+    <!-- INPUT -->
+    <section aria-label="Text input">
+        <div class="panel" style="padding: 0; overflow: hidden;">
+            <label for="textInput" style="display: block; padding: 14px 16px 0; font-size: 12px; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.06em;">Input Text</label>
+            <form hx-post="/ui/analyze" hx-target="#analysis-results" hx-indicator="#loading">
+                <textarea id="textInput" name="text" placeholder="Paste or type text to analyze..." required maxlength="{{ max_text_length }}" oninput="document.getElementById('charCount').innerText = this.value.length;" aria-describedby="charCounter">{{ text|default('') }}</textarea>
+                <div class="input-tools">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span id="charCounter" aria-live="polite" style="font-variant-numeric: tabular-nums;"><span id="charCount">0</span> / {{ max_text_length }}</span>
+                        <span style="font-size: 12px; color: var(--fg-faint);">Ctrl+Enter to analyze</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('textInput').value=''; document.getElementById('charCount').innerText='0';">Clear</button>
+                        <button type="submit" class="btn">
+                            Analyze
+                            <span id="loading" class="htmx-indicator">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: spin 0.8s linear infinite;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- RESULTS -->
+    <div id="analysis-results">
+        {% block result %}
+        {% if error %}
+        <div class="error-banner" role="alert">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% elif status == 'unsupported_language' %}
+        <div class="warning-banner" role="alert">
+            <strong>Unsupported Language:</strong> MDAS MVP supports English text only. (Detected: {{ language.label }})
+        </div>
+        {% elif status == 'success' %}
+
+        <!-- Overview -->
+        <section aria-labelledby="overview-heading">
+            <h3 id="overview-heading" class="section-heading">Analysis Overview</h3>
+            <div class="overview-grid" style="margin-bottom: 24px;">
+                <div class="overview-card" style="border-color: var(--voice-{% if linguistics.voice.summary_label %}{{ linguistics.voice.summary_label }}{% else %}border{% endif %}-border);">
+                    <div class="label">Voice</div>
+                    <div class="value" style="color: var(--voice-{% if linguistics.voice.summary_label %}{{ linguistics.voice.summary_label }}{% else %}border{% endif %}-text); text-transform: capitalize;">{{ linguistics.voice.summary_label }}</div>
+                </div>
+                <div class="overview-card">
+                    <div class="label">Sentiment</div>
+                    <div class="value">{{ sentiment.label|capitalize }}</div>
+                </div>
+                <div class="overview-card">
+                    <div class="label">Spam</div>
+                    <div class="value" style="color: {% if spam.label == 'ham' %}var(--success){% else %}var(--error){% endif %};">{{ spam.label|upper }}</div>
+                </div>
+                <div class="overview-card">
+                    <div class="label">Language</div>
+                    <div class="value">{{ language.label }}</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Voice Analysis -->
+        <section aria-labelledby="voice-heading" style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                <h3 id="voice-heading" style="margin: 0; font-size: 15px; font-weight: 700;">Voice Analysis</h3>
+                <span style="font-size: 12px; color: var(--fg-muted); font-weight: 500;">{{ linguistics.voice.sentences|length }} clause{{ 's' if linguistics.voice.sentences|length != 1 }}</span>
+                {% if linguistics.voice.summary_label == 'mixed' %}
+                <span class="badge badge-mixed">Mixed</span>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% if linguistics.voice.sentences %}
+                    {% for s in linguistics.voice.sentences %}
+                    <article class="voice-card {{ s.label }}" aria-label="Clause {{ loop.index }}: {{ s.label }}">
+                        <div class="voice-card-header">
+                            <span class="icon" aria-hidden="true">
+                                {% if s.label == 'active' %}&rarr;{% elif s.label == 'passive' %}&larr;{% elif s.label == 'linking' %}&equiv;{% else %}?{% endif %}
+                            </span>
+                            <span class="label">{{ s.label|capitalize }}</span>
+                            <span class="clause-num">Clause {{ loop.index }}</span>
+                        </div>
+                        <blockquote><p>&ldquo;{{ s.text }}&rdquo;</p></blockquote>
+                        <dl class="evidence-grid">
+                            {% if s.evidence.subject %}<dt>Subject</dt><dd>{{ s.evidence.subject }}</dd>{% endif %}
+                            {% if s.evidence.verb %}<dt>Verb</dt><dd>{{ s.evidence.verb }}</dd>{% endif %}
+                            {% if s.evidence.aux %}<dt>Auxiliary</dt><dd>{{ s.evidence.aux }}</dd>{% endif %}
+                            {% if s.evidence.copula %}<dt>Copula</dt><dd>{{ s.evidence.copula }}</dd>{% endif %}
+                            {% if s.evidence.object %}<dt>Object</dt><dd>{{ s.evidence.object }}</dd>{% endif %}
+                            {% if s.evidence.complement %}<dt>Complement</dt><dd>{{ s.evidence.complement }}</dd>{% endif %}
+                            {% if s.evidence.agent %}<dt>Agent</dt><dd>{{ s.evidence.agent }}</dd>{% endif %}
+                        </dl>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--fg-muted); font-size: 13px;">No extractable clauses found.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Radar + ABSA -->
+        <div class="two-col" style="margin-bottom: 16px;">
+            <section class="panel" aria-labelledby="radar-heading">
+                <h3 id="radar-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Radar Signals</h3>
+                <div class="radar-wrap">
+                    <canvas id="radarChart" width="480" height="480" aria-label="Radar chart showing sentiment, toxicity, sarcasm, urgency, and churn risk" role="img"></canvas>
+                </div>
+                <div style="margin-top: 12px;">
+                    <div class="signal-row">
+                        <span class="signal-label">Sentiment</span>
+                        <span class="signal-value" style="color: {% if radar.sentiment > 0.5 %}var(--success){% elif radar.sentiment < 0.3 %}var(--error){% else %}var(--fg){% endif %};">{{ radar.sentiment|round(2) }}</span>
+                    </div>
+                    <div class="signal-row">
+                        <span class="signal-label">Toxicity</span>
+                        <span class="signal-value">{{ radar.toxicity|round(2) }}</span>
+                    </div>
+                    <div class="signal-row">
+                        <span class="signal-label">Sarcasm</span>
+                        <span class="signal-value" style="color: var(--experimental);">Experimental</span>
+                    </div>
+                    <div class="signal-row">
+                        <span class="signal-label">Urgency</span>
+                        <span class="signal-value">{{ radar.urgency|round(2) }}</span>
+                    </div>
+                    <div class="signal-row">
+                        <span class="signal-label">Churn Risk</span>
+                        <span class="signal-value" style="color: {% if radar.churn_risk > 0.5 %}var(--error){% else %}var(--fg){% endif %};">{{ radar.churn_risk|round(2) }}</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="absa-heading">
+                <h3 id="absa-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Aspect-Based Sentiment</h3>
+                {% if absa %}
+                <table class="absa-table">
+                    <thead><tr><th>Aspect</th><th>Sentiment</th></tr></thead>
+                    <tbody>
+                    {% for a in absa %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ a.aspect }}</td>
+                        <td class="absa-{{ a.sentiment|lower }}">{{ a.sentiment }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; font-size: 13px; color: var(--fg-muted); font-style: italic;">No aspects detected in this text.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <!-- Spam + Stats -->
+        <div class="two-col" style="margin-bottom: 24px;">
+            <section class="panel" aria-labelledby="spam-heading">
+                <h3 id="spam-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Spam Check</h3>
+                <div class="spam-result {{ 'spam-ham' if spam.label == 'ham' else 'spam-spam' }}">
+                    <span class="spam-dot" aria-hidden="true"></span>
+                    <span>{{ spam.label|upper }}</span>
+                    <span style="font-size: 13px; font-weight: 500; letter-spacing: 0;">{{ 'Not spam' if spam.label == 'ham' else 'Likely spam' }}</span>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="stats-heading">
+                <h3 id="stats-heading" style="margin: 0 0 12px; font-size: 15px; font-weight: 700;">Language & Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Language</div>
+                        <div class="stat-value">{{ language.label }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Words</div>
+                        <div class="stat-value">{{ statistics.words }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Sentences</div>
+                        <div class="stat-value">{{ statistics.sentences }}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Reading Time</div>
+                        <div class="stat-value">{{ statistics.reading_time }}</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    <script>
+    (function drawRadar() {
+        var canvas = document.getElementById('radarChart');
+        if (!canvas) return;
+        var dpr = window.devicePixelRatio || 1;
+        var displayW = 240, displayH = 240;
+        canvas.width = displayW * dpr;
+        canvas.height = displayH * dpr;
+        canvas.style.width = displayW + 'px';
+        canvas.style.height = displayH + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        var data = [
+            Math.abs({{ radar.sentiment|default(0) }}),
+            {{ radar.toxicity|default(0) }},
+            0,
+            {{ radar.urgency|default(0) }},
+            {{ radar.churn_risk|default(0) }}
+        ];
+        var labels = ['Sentiment', 'Toxicity', 'Sarcasm', 'Urgency', 'Churn'];
+        var numPoints = 5;
+        var cx = displayW / 2, cy = displayH / 2, radius = 88;
+
+        ctx.clearRect(0, 0, displayW, displayH);
+
+        // Grid rings
+        for (var level = 1; level <= 4; level++) {
+            var r = radius * (level / 4);
+            ctx.beginPath();
+            ctx.strokeStyle = level === 4 ? '#d1d5db' : '#e5e7eb';
+            ctx.lineWidth = level === 4 ? 1 : 0.5;
+            ctx.setLineDash(level < 4 ? [3, 3] : []);
+            for (var i = 0; i < numPoints; i++) {
+                var angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+                var x = cx + r * Math.cos(angle);
+                var y = cy + r * Math.sin(angle);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // Axis lines
+        for (var i = 0; i < numPoints; i++) {
+            var angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+            ctx.strokeStyle = '#d1d5db';
+            ctx.lineWidth = 0.75;
+            ctx.stroke();
+        }
+
+        // Data polygon
+        ctx.beginPath();
+        for (var i = 0; i < numPoints; i++) {
+            var angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+            var r = radius * (data[i] || 0);
+            var x = cx + r * Math.cos(angle);
+            var y = cy + r * Math.sin(angle);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(67, 56, 202, 0.12)';
+        ctx.fill();
+        ctx.strokeStyle = '#4338ca';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Data dots
+        for (var i = 0; i < numPoints; i++) {
+            var angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+            var r = radius * (data[i] || 0);
+            var x = cx + r * Math.cos(angle);
+            var y = cy + r * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#4338ca';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Labels
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (var i = 0; i < numPoints; i++) {
+            var angle = (Math.PI * 2 * i / numPoints) - (Math.PI / 2);
+            var lx = cx + (radius + 22) * Math.cos(angle);
+            var ly = cy + (radius + 22) * Math.sin(angle);
+            ctx.fillText(labels[i], lx, ly);
+        }
+    })();
+    </script>
+        {% else %}
+        <!-- Empty state: no results yet -->
+        <div class="preview-empty">
+            <div class="icon" aria-hidden="true">&#9672;</div>
+            <h3>Ready to analyze</h3>
+            <p>Paste or type text above, then click <strong>Analyze</strong> to see clause-level voice, radar signals, ABSA, spam, and statistics.</p>
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}

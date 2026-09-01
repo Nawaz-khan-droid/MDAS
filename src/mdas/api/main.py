@@ -28,7 +28,10 @@ app = FastAPI(
     title="MDAS Keyless API",
     description="Multi-Dimensional Text Analysis System - Local NLP Inference API",
     version="0.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 from fastapi.exceptions import RequestValidationError

@@ -213,6 +213,10 @@ class AnalysisService:
             aspect = None
             descriptor = None
             
+            # Skip punctuation tokens
+            if token.is_punct or token.text == "-":
+                continue
+
             # Pattern 1: Noun + Adjective modifier (e.g. "torn box")
             if token.dep_ == "amod" and token.head.pos_ in {"NOUN", "PROPN"}:
                 aspect = chunk_map.get(token.head.i, token.head.text.lower())
@@ -243,7 +247,8 @@ class AnalysisService:
                 if descriptor in {"torn", "broken", "broke", "error", "fail", "terrible", "crashed", "worn", "damaged", "scratched", "dented", "soiled", "stained"}: polarity = "Negative"
                 if descriptor in {"excellent", "great", "awesome", "perfect", "good", "new", "clean", "fast", "smooth"}: polarity = "Positive"
                 
-                if not any(a["aspect"] == aspect and a["descriptor"] == descriptor for a in absa_results):
+                # Deduplicate: only keep one entry per aspect
+                if not any(a["aspect"] == aspect for a in absa_results):
                     absa_results.append({
                         "aspect": aspect,
                         "descriptor": descriptor,

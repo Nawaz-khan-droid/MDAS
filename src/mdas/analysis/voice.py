@@ -178,8 +178,28 @@ def _analyze_clauses(sent, start_id):
                     "voice": "Active",
                     "evidence": evidence
                 })
-                
-    # If still nothing, it's uncertain
+
+    # If still nothing, check for noun phrases (ROOT is a noun — no verb present)
+    if not clauses:
+        root = next((t for t in sent if t.dep_ == "ROOT"), None)
+        if root and root.pos_ in {"NOUN", "PROPN", "ADJ"}:
+            clauses.append({
+                "segment_id": start_id,
+                "text": sent.text.strip(),
+                "voice": "Linking",
+                "evidence": {
+                    "text": sent.text.strip(),
+                    "subject": None,
+                    "verb": None,
+                    "aux": None,
+                    "object": None,
+                    "agent": None,
+                    "copula": None,
+                    "complement": root.text
+                }
+            })
+
+    # Final fallback
     if not clauses:
         clauses.append({
             "segment_id": start_id,

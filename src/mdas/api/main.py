@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import traceback
+from pathlib import Path
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Form
@@ -97,7 +98,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # Set up templates using jinja2-fragments
-TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+TEMPLATE_DIR = str(Path(__file__).resolve().parent.parent / "templates")
 templates = Jinja2Blocks(directory=TEMPLATE_DIR)
 
 @app.get("/api/v1/mdas/health")
@@ -138,23 +139,23 @@ def analyze_text_api(request: AnalysisRequest, req: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def landing_page(request: Request):
-    return templates.TemplateResponse(request, "landing.html", {"request": request})
+    return templates.TemplateResponse("landing.html", {"request": request})
 
 @app.get("/app", response_class=HTMLResponse)
 def analysis_app(request: Request):
-    return templates.TemplateResponse(request, "app.html", {"request": request, "max_text_length": MAX_TEXT_LENGTH})
+    return templates.TemplateResponse("app.html", {"request": request, "max_text_length": MAX_TEXT_LENGTH})
     
 @app.get("/api-docs", response_class=HTMLResponse)
 def custom_docs(request: Request):
-    return templates.TemplateResponse(request, "docs.html", {"request": request})
+    return templates.TemplateResponse("docs.html", {"request": request})
 
 @app.post("/ui/analyze", response_class=HTMLResponse)
 def analyze_text_ui(request: Request, text: str = Form(...)):
     if not hasattr(request.app.state, "analyzer") or not request.app.state.analyzer:
-        return templates.TemplateResponse(request, "app.html", {"request": request, "error": "MDAS Engine is not loaded.", "text": text}, block_name="result")
+        return templates.TemplateResponse("app.html", {"request": request, "error": "MDAS Engine is not loaded.", "text": text}, block_name="result")
     
     if not text.strip():
-        return templates.TemplateResponse(request, "app.html", {"request": request, "error": "Text cannot be empty.", "text": text}, block_name="result")
+        return templates.TemplateResponse("app.html", {"request": request, "error": "Text cannot be empty.", "text": text}, block_name="result")
         
     try:
         result = request.app.state.analyzer.analyze(text, analysis_id=str(uuid.uuid4()))
@@ -163,18 +164,17 @@ def analyze_text_ui(request: Request, text: str = Form(...)):
             ctx["request"] = request
             ctx["status"] = "unsupported_language"
             ctx["text"] = text
-            return templates.TemplateResponse(request, "app.html", ctx, block_name="result")
+            return templates.TemplateResponse("app.html", ctx, block_name="result")
             
         ctx = result.dict()
         ctx["request"] = request
         ctx["text"] = text
-        return templates.TemplateResponse(request, "app.html", ctx, block_name="result")
+        return templates.TemplateResponse("app.html", ctx, block_name="result")
     except ValueError as ve:
-        # Pass the error message to the template
-        return templates.TemplateResponse(request, "app.html", {"request": request, "error": str(ve), "text": text}, block_name="result")
+        return templates.TemplateResponse("app.html", {"request": request, "error": str(ve), "text": text}, block_name="result")
     except Exception as e:
         traceback.print_exc()
-        return templates.TemplateResponse(request, "app.html", {"request": request, "error": "The text could not be analyzed.", "text": text}, block_name="result")
+        return templates.TemplateResponse("app.html", {"request": request, "error": "The text could not be analyzed.", "text": text}, block_name="result")
 
 
 if __name__ == "__main__":

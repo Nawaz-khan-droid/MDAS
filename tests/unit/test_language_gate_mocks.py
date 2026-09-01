@@ -7,12 +7,12 @@ from mdas.api.schemas import UnsupportedLanguageResponse
 def test_unsupported_language_prevents_nlp_execution():
     service = AnalysisService()
     
-    # Spy on the NLP backend and ML registry
+    # Spanish text >100 chars to bypass heuristic_short_text override
     with patch.object(service.backend, "analyze", wraps=service.backend.analyze) as mock_spacy_analyze, \
          patch.object(service.registry, "predict", wraps=service.registry.predict) as mock_registry_predict, \
-         patch.object(service.sia, "polarity_scores", wraps=service.sia.polarity_scores) as mock_vader:
+         patch("mdas.application.analysis_service.vader_polarity_scores") as mock_vader:
          
-         result = service.analyze("Hola, este producto es muy bueno y me gusta.", str(uuid.uuid4()))
+         result = service.analyze("Este es un producto muy malo que no funciona nada bien, necesito devolverlo cuanto antes porque estoy muy molesto.", str(uuid.uuid4()))
          
          assert isinstance(result, UnsupportedLanguageResponse)
          

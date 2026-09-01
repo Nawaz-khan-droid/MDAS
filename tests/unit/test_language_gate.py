@@ -10,8 +10,8 @@ def test_empty_input_rejected():
 
 def test_unsupported_language_gate():
     service = AnalysisService()
-    # Spanish text (no English markers)
-    result = service.analyze("Hola, como estas? Me llamo Juan y soy de España.", str(uuid.uuid4()))
+    # Spanish text >100 chars to bypass heuristic_short_text override
+    result = service.analyze("Este es un producto muy malo que no funciona nada bien, necesito devolverlo cuanto antes porque estoy muy molesto con el servicio al cliente.", str(uuid.uuid4()))
     
     assert isinstance(result, UnsupportedLanguageResponse)
     assert result.status == "unsupported_language"

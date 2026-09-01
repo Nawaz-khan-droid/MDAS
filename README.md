@@ -2,10 +2,15 @@
 
 MDAS is a modular-monolith NLP microservice that provides deep structural and semantic understanding of English text. It goes beyond simple document classification to understand **what each clause is doing**, extracting grammatical evidence for active, passive, and linking constructions.
 
+## Live Demo
+
+**https://mdas-0x3n.onrender.com**
+
 ## Quick Start
 
 ```bash
 pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 uvicorn mdas.api.main:app --host 0.0.0.0 --port 8002
 ```
 
@@ -44,8 +49,8 @@ Word count, sentence count, token count, reading time, and language detection.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/mdas/health` | GET | Health check |
-| `/api/v1/mdas/analyze` | POST | Full analysis |
+| `GET /api/v1/mdas/health` | GET | Health check — returns `{"status":"online","models_loaded":true}` |
+| `POST /api/v1/mdas/analyze` | POST | Full analysis (requires `text` field, max 5000 chars) |
 
 **Request:**
 ```json
@@ -54,14 +59,39 @@ Word count, sentence count, token count, reading time, and language detection.
 
 **Response includes:** language, statistics, voice (per clause), sentiment, radar signals, ABSA, spam classification.
 
-See `/api-docs` in the browser for the full schema and error codes.
+**Error codes:**
+| Status | Code | Meaning |
+|--------|------|---------|
+| 400 | `VALIDATION_FAILED` | Empty, malformed, or unsupported language |
+| 413 | `PAYLOAD_TOO_LARGE` | Text exceeds 5,000 characters |
+| 429 | `RATE_LIMITED` | Too many requests (30/min per IP) |
+| 500 | `ANALYSIS_FAILED` | Internal processing error |
+| 503 | `SERVICE_UNAVAILABLE` | Engine not loaded |
+
+## Web UI
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/app` | Text analyzer (HTMX) |
+| `/api-docs` | API documentation |
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for full audit details.
+
+- Rate limiting: 30 requests per minute per IP
+- HSTS + security headers on all responses
+- Input validation: Pydantic schema enforcement, max 5,000 chars
+- No stack traces returned to clients
+- No secrets or credentials in repository
 
 ## Deployment
 
 MDAS is designed for **Render Free Tier (512 MB)**. Key constraints:
 - **Hard input limit:** 5,000 characters (rejects with HTTP 413)
 - **Language:** English only (non-English returns HTTP 400)
-- **Memory:** Peak usage ~474 MB at 5K input with 38 MB headroom
+- **Memory:** ~11 MB baseline, stable under load
 
 For larger documents, chunk text by paragraph before sending.
 
@@ -75,11 +105,11 @@ PYTHONPATH=src pytest tests/
 
 ```
 src/mdas/
-├── api/            # FastAPI routes and schemas
+├── api/            # FastAPI routes, schemas, middleware
 ├── application/    # Analysis service (orchestrator)
 ├── analysis/       # Voice, sentiment, signals, statistics, ABSA
 ├── classification/ # Spam classifier, registry
-├── core/           # Constants, errors, config
+├── core/           # Constants, errors
 ├── nlp/            # spaCy backend
 └── templates/      # Jinja2 + HTMX UI
 ```

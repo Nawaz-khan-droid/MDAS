@@ -16,7 +16,7 @@ dependencies = [
     "fastapi>=0.110,<1",
     "uvicorn[standard]>=0.27,<1",
     "langdetect>=1.0.9,<2",
-    "jinja2-fragments>=0.2,<1",
+    "jinja2-fragments>=1.0,<2",
     "python-multipart>=0.0.9",
 ]
 

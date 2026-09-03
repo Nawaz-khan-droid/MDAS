@@ -46,10 +46,6 @@ V2 builds on V1. It's not a rewrite, it's an improvement.
 
 **Sarcasm** is heuristic-only, 0/1 in both versions. It's there for completeness, not reliability.
 
-## The training data question
-
-The training data in `v2-training-data/` is just for reference. The app doesn't load it at runtime. Only the trained model artifact (`spam_v2.joblib`, 932 KB) gets loaded into memory.
-
 ## API
 
 ### Health check
@@ -111,13 +107,22 @@ src/mdas/
 
 ## Memory
 
-The whole app runs on Render's free tier (512 MB). Here's where the memory goes:
+Everything runs on Render's free tier (512 MB hard limit).
 
-- **spaCy**: ~263 MB (the big one, needed for voice and entities)
-- **sklearn runtime**: ~110 MB (needed for spam classification)
-- **Everything else**: ~83 MB (FastAPI, VADER, V2 modules, headroom)
+| Component | RSS (MB) | Notes |
+|---|---|---|
+| spaCy (en_core_web_sm) | ~263 | Voice analysis, NER, dependency parsing |
+| sklearn runtime | ~110 | LinearSVC, TF-IDF vectorizer (shared by spam) |
+| FastAPI + uvicorn | ~25 | HTTP layer |
+| VADER sentiment | ~3 | Lightweight lexicon loader |
+| V2 ABSA + signals | ~1 | Pattern matching, lexicon lookup |
+| V2 spam model artifact | ~1.6 | Trained model loaded into memory |
+| **Total peak** | **~456** | |
+| **Remaining headroom** | **~56** | |
 
-Peak usage is about 456 MB, which leaves 56 MB of headroom. It works, but it's tight. The 5,000 character limit exists for the same reason.
+Peak measured at 5,000 character input. The 5,000 character limit and single-request recommendation exist because of this.
+
+The training data (SMSSpamCollection, synthetic_diverse.tsv) lives in the git repo under `v2-training-data/` for documentation and reproducibility. It is not deployed to Render and does not consume any runtime memory. Only the trained model artifact (`spam_v2.joblib`) gets loaded.
 
 ## Constraints
 

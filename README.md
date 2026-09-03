@@ -1,79 +1,56 @@
-# MDAS — Multidimensional Text Analysis System
+# MDAS
 
-MDAS is a lightweight NLP API that provides clause-level voice analysis, aspect-based sentiment (ABSA), radar signals (toxicity/urgency/churn/sarcasm), spam classification, and lexicon-based sentiment — all running on a 512 MB free-tier deployment with no API keys required.
+A text analysis API that runs on Render's free tier. No API keys, no paid services.
+
+It does clause-level voice analysis, aspect-based sentiment, spam detection, and a handful of radar signals (toxicity, urgency, churn, sarcasm). English only. 5,000 character limit. 512 MB of RAM to work with.
 
 **Live:** `https://mdas-0x3n.onrender.com`
-**API base:** `POST /api/v1/mdas/analyze`
 
----
-
-## Quick Start
-
-```bash
-# Local development
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-PYTHONPATH=src uvicorn mdas.api.main:app --reload
-
-# Run tests
-PYTHONPATH=src pytest tests/
-```
-
-**cURL**
 ```bash
 curl -X POST https://mdas-0x3n.onrender.com/api/v1/mdas/analyze \
      -H "Content-Type: application/json" \
      -d '{"text": "The customer opened the package."}'
 ```
 
----
+## Getting it running locally
 
-## Engine Versions
+```bash
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+PYTHONPATH=src uvicorn mdas.api.main:app --reload
+```
 
-MDAS ships two engines behind a single API. The `MDAS_V2` environment variable controls which runs.
+Tests: `PYTHONPATH=src pytest tests/`
 
-| Component | V1 | V2 |
+## Two engines, same API
+
+There's a V1 and a V2 engine. You pick which one runs with the `MDAS_V2` environment variable. Same API contract, same endpoints — V2 just swaps in better spam detection, ABSA patterns, and radar signals. Voice and sentiment stay the same across both.
+
+| | V1 | V2 |
 |---|---|---|
-| **Spam** | 123 samples, 83.5% acc, hard spam/ham | 7,699 samples, 98.9% acc, margin-triage (spam/ham/needs_human_triage) |
-| **ABSA** | Adjective-on-noun patterns (7/11) | Verb-predicate + 8 extraction patterns (10/11 on matched set; **1/12 on independent unseen**) |
-| **Radar** | Raw keyword count | Negation-aware, phrase weighting, strong-trigger escalation |
-| **Voice** | Dependency rules | Shared V1 — unchanged |
-| **Sentiment** | VADER lexicon | Shared V1 — unchanged |
-| **Entities** | spaCy NER | Shared V1 — unchanged |
+| **Spam** | 123 training samples, 83.5% accuracy | 7,699 samples, 98.9% accuracy, triage for uncertain cases |
+| **ABSA** | Adjective-on-noun patterns | Verb-predicate + compound nouns + negation-aware |
+| **Radar** | Raw keyword counting | Negation-aware, phrase weighting, strong triggers |
+| **Voice** | Dependency rules | Same |
+| **Sentiment** | VADER | Same |
 
-V2 is an extension of V1, not a separate application. It reuses the same API contract, spaCy backend, voice rules, entity extraction, and VADER sentiment. One engine runs per deployment.
+V2 builds on top of V1. It's not a rewrite — it's an improvement. You run one or the other, not both.
 
-### What V2 changes
+## What actually works and what doesn't
 
-- **`src/mdas/v2/spam.py`** — TF-IDF + LinearSVC with margin-based triage. Trained on UCI SMS Spam Collection (5,574) + domain augmentation (125) + synthetic diversity (2,000) = 7,699 samples. SHA-256 hash verified before loading.
-- **`src/mdas/v2/absa.py`** — 8 dependency extraction patterns (P1-P8): amod, acomp, VBN passive, compound nouns, relative clauses, verb-predicate sentiment, xcomp+advmod, oprd resultatives. Uses `descriptor_lexicon.json` (600+ words) and `verb_lexicon.json` (positive/negative event verbs).
-- **`src/mdas/v2/signals.py`** — Lexicon-based radar with negation window, phrase-level weighting (1.5x), strong-trigger escalation, and frequency bonus.
+I'll be straightforward about this.
 
----
+**Spam detection** is solid. 98.9% on held-out test data, 98.3% on a domain-specific benchmark. It uses margin-based triage — when the model isn't sure, it says "needs human review" instead of guessing wrong. That's the whole point of V2's spam: fewer false positives, and the uncertain cases get flagged instead of misclassified.
 
-## Honest Assessment
+**Voice analysis** works well. It's rule-based on dependency parsing, so it transfers to unseen text. 7/8 on independent test sentences. The rules are structural, not word-based, which is why they generalize.
 
-### What works well
+**ABSA and radar** are where I have to be honest. They score well on the test sets I built them against — 10/11 for ABSA, improved coverage on radar signals. But when I tested them on truly independent text (phrasings they hadn't seen during development), ABSA got 1 out of 12 right. The radar improvements are real but they're fit-to-sample: I added words to the lexicon to catch specific test cases. That's coverage, not generalization. If you need ABSA or radar that works on arbitrary new phrasing, you'd need a trained model or an LLM, not hand-tuned patterns.
 
-- **Spam** — The strongest component. 98.9% accuracy on holdout (1,155 test), 98.3% on a 126-text domain benchmark. Margin triage catches ambiguous cases instead of mislabeling. FP rate: 1/126 (V1 was 6/126). This is a trained model with proper train/test split and reproducible metrics.
-- **Voice** — Dependency-structure rules. 7/8 on unseen text. Genuinely robust because it relies on syntactic patterns, not per-word lexicons.
-- **Sentiment** — VADER-based, 7/9 on benchmark. Consistent between V1 and V2.
+**Sarcasm** is heuristic-only. It's been 0/1 in both versions. Don't rely on it.
 
-### What does NOT generalize
+## API
 
-- **ABSA** — 10/11 on the matched benchmark set, but **1/12 on independent held-out text**. The patterns and lexicon were tuned to known phrasings. Novel verbs (shred, creak, bow, chafe, resist, trap, release, breathe, corrode, bounce) are largely missed. ABSA is a coverage system, not a generalizable one.
-- **Radar (toxicity/urgency/churn)** — Improved coverage on matched test sentences, but improvements are fit-to-sample. Lexicon additions were chosen to hit specific test cases. Real-world out-of-distribution robustness is not demonstrated. Toxicity has a known regression: "idiot... Screw you" scores 0.33 (low) in V2 vs 1.0 (high) in V1.
-- **Sarcasm** — Heuristic only in both V1 and V2. Not a trained classifier. 0/1 in both versions.
-
-### Bottom line
-
-If the product needs robust ABSA or radar across arbitrary unseen prose, rule-based and lexicon-based systems are insufficient. That requires a trained statistical component or an LLM. The measurable, defensible V2 wins are **spam** (trained + held-out eval) and **voice** (dependency rules). ABSA/radar improvements are coverage-only.
-
----
-
-## API Reference
-
-### Health Check
+### Health check
 
 ```
 GET /api/v1/mdas/health
@@ -93,205 +70,77 @@ GET /api/v1/mdas/health
 POST /api/v1/mdas/analyze
 ```
 
-**Request**
-```json
-{ "text": "The customer opened the package." }
-```
-
-**Response**
 ```json
 {
-  "analysis_id": "uuid",
-  "status": "success",
-  "language": { "code": "en", "label": "English" },
-  "statistics": {
-    "words": 6, "characters": 30, "sentences": 1,
-    "tokens": 7, "paragraphs": 1, "reading_time": "< 1 min"
-  },
-  "linguistics": {
-    "voice": {
-      "summary_label": "active",
-      "method": "dependency_rules",
-      "sentences": [{
-        "text": "The customer opened the package",
-        "label": "active",
-        "evidence": {
-          "subject": "customer", "verb": "opened",
-          "object": "package", "text": "customer opened package"
-        }
-      }]
-    },
-    "entities": []
-  },
-  "sentiment": { "label": "neutral", "score": 0.0, "method": "lexicon_rules" },
-  "radar": {
-    "sentiment": 0.5, "toxicity": 0.0, "sarcasm": 0.0,
-    "urgency": 0.1, "churn_risk": 0.1
-  },
-  "spam": {
-    "label": "ham", "confidence": 0.0,
-    "method": "tfidf_linear_svc_v2", "model_version": "2.0"
-  },
-  "absa": []
+  "text": "The customer opened the package."
 }
 ```
 
-### Error Responses
+Returns voice, sentiment, radar, spam, ABSA, entities, and text statistics. Full response shape is in the code — `src/mdas/api/schemas.py`.
 
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | VALIDATION_FAILED | JSON validation failure, empty text, or unsupported language |
-| 400 | BAD_REQUEST | Text field is empty or missing |
-| 400 | UNSUPPORTED_LANGUAGE | Text is not English |
-| 413 | PAYLOAD_TOO_LARGE | Text exceeds 5,000 characters |
-| 429 | RATE_LIMITED | Too many requests (30/min per IP) |
-| 500 | ANALYSIS_FAILED | Analysis service unavailable or internal failure |
-| 504 | TIMEOUT | Analysis exceeded configured timeout |
+### Errors
 
----
+| Status | What happened |
+|--------|---------------|
+| 400 | Bad input — empty text, wrong language, validation failure |
+| 413 | Text too long (over 5,000 characters) |
+| 429 | Rate limited (30 requests per minute per IP) |
+| 500 | Something broke on our end |
+| 504 | Analysis took too long (30 second timeout) |
 
-## Feature Details
-
-### Voice Analysis
-Clause-level Active / Passive / Linking classification using spaCy dependency parsing. Evidence fields: Subject, Verb, Auxiliary, Object, Agent, Copula, Complement. Summary label: active, passive, linking, or mixed.
-
-**Accuracy:** 84.6% overall (atomic clauses ~100%, multi-clause ~72%). 7/8 on independent unseen text.
-
-### Spam Classification
-TF-IDF + LinearSVC with margin-based triage. When |margin| <= 0.2, the model returns `needs_human_triage` instead of a hard label — reducing false positives on ambiguous text.
-
-**Training data:** 7,699 samples (UCI SMS Spam Collection + domain augmentation + synthetic). See `v2-training-data/` for the full dataset.
-
-| Metric | Holdout (1,155) | Domain Benchmark (126) |
-|--------|-----------------|----------------------|
-| Accuracy | 98.87% | 98.31% |
-| Spam F1 | 97.52% | 96.15% |
-| False Positives | 1 | 1 |
-| False Negatives | — | 1 |
-| Triaged | 13 | 8 |
-
-### ABSA (Aspect-Based Sentiment Analysis)
-Dependency-pattern extraction returning aspect-descriptor pairs with polarity (Positive / Negative / Neutral).
-
-**Honest caveat:** 10/11 on matched test set, 1/12 on independent unseen text. Coverage-only, not generalizable.
-
-### Radar Signals
-Normalized 0.0–1.0 signal strengths:
-
-| Signal | Method | Honest Assessment |
-|--------|--------|-------------------|
-| Sentiment | VADER compound polarity | Consistent, 7/9 |
-| Toxicity | Lexical harmful language detection | Improved coverage, has regressions on some phrases |
-| Sarcasm | Experimental heuristic | Weak in both V1 and V2, not reliable |
-| Urgency | Keyword + phrase-level weighting | Improved coverage, fit-to-sample |
-| Churn Risk | Cancellation intent signals | Improved coverage, fit-to-sample |
-
-### Sentiment
-Lightweight lexicon-based (VADER). Returns positive, negative, or neutral with a compound score from −1 to +1.
-
----
-
-## Constraints
-
-### Hard Limits
-- **512 MB RAM** — Render Free Tier ceiling. V2 peak: 456 MB (56 MB headroom).
-- **5,000 characters** — Hard-capped input limit.
-- **English only** — Non-English text is rejected with HTTP 400.
-- **No PyTorch** — Excluded to stay within memory budget.
-- **No authentication** — MVP API is open. Rate limiting (30 req/min/IP) mitigates abuse.
-
-### Known Limitations
-- **ABSA/radar do not generalize** — Pattern/lexicon systems increase coverage of known forms but fail on novel phrasing.
-- **Sarcasm detection is unreliable** — Heuristic only, not a trained classifier.
-- **Memory headroom is tight** — 56 MB at peak. Concurrent requests risk OOM on free tier.
-- **LinearSVC is non-deterministic** — Exact holdout numbers vary ~±0.2% between retrains (liblinear backend).
-- **Single concurrent request recommended** — Free tier memory constraints.
-
-### What Was Intentionally Removed
-| Component | Reason |
-|-----------|--------|
-| Intent Classification | Requires PyTorch (~300 MB+) |
-| MiniLM / SentenceTransformers | Training-only dependency, not needed in production |
-| NLTK VADER | Replaced with lightweight lexicon loader (saves 107 MB) |
-
----
-
-## Project Structure
+## What's under the hood
 
 ```
 src/mdas/
-├── api/
-│   ├── main.py              # FastAPI app (V1/V2 feature flag, timeout, logging)
-│   └── schemas.py           # Pydantic models (AnalysisResponse)
-├── application/
-│   └── analysis_service.py  # V1 AnalysisService
-├── classification/
-│   ├── model.py             # V1 TextClassifier (joblib)
-│   └── registry.py          # ModelRegistry
-├── analysis/
-│   ├── language.py          # langdetect wrapper
-│   ├── linguistics.py       # Voice + NER
-│   ├── lightweight_sentiment.py  # VADER
-│   ├── signals.py           # V1 radar signals
-│   └── statistics.py        # Word/sent counts
-├── core/
-│   ├── constants.py         # MAX_TEXT_LENGTH, etc.
-│   ├── errors.py            # Exception classes
-│   └── types.py             # Internal dataclasses
-├── nlp/
-│   └── spacy_backend.py     # spaCy pipeline wrapper
-├── templates/               # Jinja2 HTML templates
-└── v2/                      # V2 engine (drop-in replacement)
-    ├── service.py           # V2AnalysisService
-    ├── absa.py              # V2 ABSA patterns
-    ├── signals.py           # V2 radar signals
-    ├── spam.py              # V2 spam classifier (SHA-256 verified)
-    ├── descriptor_lexicon.json
-    ├── verb_lexicon.json
-    ├── signal_lexicons.json
-    └── models/
-        ├── spam_v2.joblib   # Trained model
-        └── spam_v2.json     # Metadata + SHA-256 prefix
-
-v2-training-data/            # Training datasets (reproducibility)
-├── SMSSpamCollection        # UCI SMS Spam Collection (5,574 msgs)
-├── synthetic_diverse.tsv    # Synthetic diversity samples (2,000)
-└── domain_augmentation.py   # Domain-specific examples (125)
+├── api/                  FastAPI app, schemas
+├── application/          V1 AnalysisService
+├── classification/       V1 spam model (joblib)
+├── analysis/             Voice, sentiment, radar, entities
+├── core/                 Constants, errors, types
+├── nlp/                  spaCy wrapper
+├── templates/            HTML (Jinja2 + HTMX)
+└── v2/                   V2 engine
+    ├── service.py        Drop-in replacement for V1
+    ├── spam.py           Trained classifier with SHA-256 verification
+    ├── absa.py           Dependency-pattern ABSA
+    ├── signals.py        Radar signals
+    └── models/           Trained model + metadata
 ```
 
----
+Training data lives in `v2-training-data/` — just for reference and reproducibility. The app doesn't load those files at runtime.
 
-## Environment Variables
+## Constraints
 
-| Variable | Default | Description |
-|---|---|---|
-| `MDAS_V2` | `false` | Set to `true` to use the V2 engine |
-| `MDAS_TIMEOUT` | `30` | Request timeout in seconds |
-| `PYTHONPATH` | — | Set to `src` for module resolution |
+The app runs on Render's free tier. That means 512 MB of RAM total — OS, Python, spaCy, the model, everything. Peak usage is around 456 MB, which leaves about 56 MB of headroom. It works, but it's tight. Concurrent requests could push it over.
 
-**Rollback:** Set `MDAS_V2=false` in Render environment variables to instantly switch to V1. No code change needed.
+The 5,000 character limit is there for the same reason. Longer text means more spaCy parsing, more memory, more time. 5K is the safe ceiling.
 
----
+No authentication. Rate limiting (30/min per IP) is the only protection. English only — other languages get rejected immediately.
+
+## Environment variables
+
+| Variable | What it does |
+|---|---|
+| `MDAS_V2` | `true` for V2 engine, `false` for V1. Default: `false` |
+| `MDAS_TIMEOUT` | Request timeout in seconds. Default: `30` |
+| `PYTHONPATH` | Set to `src` for module resolution |
+
+To roll back to V1 on Render: set `MDAS_V2=false` in the dashboard. No code change needed.
 
 ## Security
 
-- **Model integrity** — V2 spam model is SHA-256 hash verified before loading (defense against pickle deserialization attacks).
-- **Request timeout** — 30s timeout prevents request hanging (configurable via `MDAS_TIMEOUT`).
-- **Rate limiting** — 30 requests/min per IP with `Retry-After` header.
-- **Security headers** — HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy.
-- **No stack traces to clients** — Errors logged server-side, generic messages returned.
-- **Input validation** — Pydantic schema, max 5,000 chars, empty text rejected.
-- **No file upload, no shell commands, no eval** — Text-only API.
+- Spam model is SHA-256 verified before loading (pickle files can execute arbitrary code if tampered with)
+- 30 second request timeout
+- Security headers (HSTS, nosniff, DENY framing)
+- No stack traces sent to clients
+- No file uploads, no shell commands, no eval
 
-See `SECURITY.md` for the full security audit.
-
----
+Full audit in `SECURITY.md`.
 
 ## Deployment
 
-MDAS runs on Render Free Tier (512 MB). See `render.yaml` for build and start commands.
-
 ```yaml
+# render.yaml
 services:
   - type: web
     name: mdas
@@ -308,33 +157,10 @@ services:
         value: "30"
 ```
 
----
-
-## Testing
-
-```bash
-# V1 tests
-PYTHONPATH=src pytest tests/unit/
-
-# V2 tests (31 tests: spam, ABSA, signals, integration)
-PYTHONPATH=src pytest tests/v2/
-
-# All tests
-PYTHONPATH=src pytest tests/
-```
-
----
-
 ## Web UI
 
-| Route | Description |
-|-------|-------------|
+| Route | What it is |
+|-------|------------|
 | `/` | Landing page |
 | `/app` | Text analyzer (HTMX) |
-| `/api-docs` | API documentation |
-
----
-
-## License
-
-See repository for license details.
+| `/api-docs` | API docs |

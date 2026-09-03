@@ -124,7 +124,7 @@ Everything runs on Render's free tier (512 MB hard limit). Here's exactly where 
 
 Peak measured at 5,000 character input. The 5,000 character limit and single-request recommendation exist because of this.
 
-The training data (`v2-training-data/`) is in the git repo for documentation. Render clones the whole repo during build, so those files are on Render's disk. But the app never loads them at runtime. Training happens locally, you push the trained model artifact, and Render only loads the artifact. The raw data just sits there doing nothing.
+The training data lives locally in `v2-training-data/` for training and reproducibility. It is not in the deployed repo. You train locally, push the model artifact, Render loads only the artifact.
 
 If you trained additional models (toxicity, urgency, churn), each TF-IDF + LinearSVC adds about 1-2 MB. sklearn is already loaded, so no new runtime. You could fit 4 more models before headroom becomes a problem.
 

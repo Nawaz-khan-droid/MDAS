@@ -54,6 +54,7 @@ uv.lock
 # Data files
 data/raw/*.csv
 !data/raw/README.md
+v2-training-data/
 
 # Environment variables
 .env

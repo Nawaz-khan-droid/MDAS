@@ -107,22 +107,26 @@ src/mdas/
 
 ## Memory
 
-Everything runs on Render's free tier (512 MB hard limit).
+Everything runs on Render's free tier (512 MB hard limit). Here's exactly where it goes:
 
-| Component | RSS (MB) | Notes |
-|---|---|---|
-| spaCy (en_core_web_sm) | ~263 | Voice analysis, NER, dependency parsing |
-| sklearn runtime | ~110 | LinearSVC, TF-IDF vectorizer (shared by spam) |
-| FastAPI + uvicorn | ~25 | HTTP layer |
-| VADER sentiment | ~3 | Lightweight lexicon loader |
-| V2 ABSA + signals | ~1 | Pattern matching, lexicon lookup |
-| V2 spam model artifact | ~1.6 | Trained model loaded into memory |
-| **Total peak** | **~456** | |
-| **Remaining headroom** | **~56** | |
+```
+512 MB total budget
+├── spaCy (en_core_web_sm)         ~263 MB   voice, NER, dependency parsing
+├── sklearn runtime                ~110 MB   LinearSVC, TF-IDF (loaded for spam)
+├── FastAPI + uvicorn               ~25 MB   HTTP layer
+├── VADER sentiment                  ~3 MB   lexicon loader
+├── V2 ABSA + signals                ~1 MB   pattern matching, lexicon lookup
+├── V2 spam model artifact         ~1.6 MB   trained model in memory
+│
+├── Total peak                     ~456 MB
+└── Remaining headroom              ~56 MB
+```
 
 Peak measured at 5,000 character input. The 5,000 character limit and single-request recommendation exist because of this.
 
-The training data (SMSSpamCollection, synthetic_diverse.tsv) lives in the git repo under `v2-training-data/` for documentation and reproducibility. It is not deployed to Render and does not consume any runtime memory. Only the trained model artifact (`spam_v2.joblib`) gets loaded.
+The training data (`v2-training-data/`) is in the git repo for documentation. Render clones the whole repo during build, so those files are on Render's disk. But the app never loads them at runtime. Training happens locally, you push the trained model artifact, and Render only loads the artifact. The raw data just sits there doing nothing.
+
+If you trained additional models (toxicity, urgency, churn), each TF-IDF + LinearSVC adds about 1-2 MB. sklearn is already loaded, so no new runtime. You could fit 4 more models before headroom becomes a problem.
 
 ## Constraints
 

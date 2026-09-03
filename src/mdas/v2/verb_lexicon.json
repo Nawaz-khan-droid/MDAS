@@ -1,0 +1,21 @@
+{
+  "negative_verbs": [
+    "jam", "jammed", "snap", "snapped", "leak", "leaked", "leaking", "tear", "tore",
+    "crack", "cracked", "scrape", "scraped", "shatter", "shattered", "fracture", "fractured",
+    "malfunction", "malfunctioned", "fail", "failed", "break", "broke", "broken",
+    "clog", "clogged", "buckle", "buckled", "peel", "peeled", "warp", "warped",
+    "refuse", "refused", "rejects", "rejected", "stall", "stalled", "stuck",
+    "overheat", "overheated", "freeze", "froze", "crash", "crashed", "glitch", "glitched",
+    "dent", "dented", "rip", "ripped", "snag", "snagged", "kink", "kinked", "drip", "dribbled",
+    "wobble", "wobbled", "sway", "swayed", "sag", "sagged", "slip", "slipped", "slide", "slid",
+    "disintegrate", "disintegrated", "crumble", "crumbled", "rust", "rusted", "corrode", "corroded"
+  ],
+  "positive_verbs": [
+    "gleam", "gleamed", "shimmer", "shimmered", "shine", "shone", "polish", "polished",
+    "absorb", "absorbed", "cradle", "cradled", "cushion", "cushioned", "support", "supported",
+    "hold", "held", "fit", "fitted", "snap", "snap_in", "seal", "sealed", "stay", "remained",
+    "work", "worked", "runs", "ran", "function", "functioned", "operate", "operated",
+    "excel", "excelled", "thrive", "thrived", "withstand", "withstood", "endure", "endured",
+    "ventilate", "ventilated", "insulate", "insulated", "streamline", "streamlined", "boost", "boosted"
+  ]
+}

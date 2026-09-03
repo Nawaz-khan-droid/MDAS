@@ -1,13 +1,13 @@
-# Production dependencies for MDAS MVP
-numpy
-pandas
-scikit-learn
-joblib
-spacy
-fastapi
-uvicorn[standard]
-langdetect
-jinja2-fragments
-python-multipart
+# Production dependencies for MDAS V2
+numpy==2.4.6
+pandas==2.3.3
+scikit-learn==1.9.0
+joblib==1.5.3
+spacy==3.8.16
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+langdetect==1.0.9
+jinja2-fragments==0.2.0
+python-multipart==0.0.20
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 -e .

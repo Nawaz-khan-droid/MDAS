@@ -1,0 +1,36 @@
+{
+  "urgency": [
+    "urgent", "urgently", "immediate", "immediately", "asap", "now", "critical", "emergency",
+    "deadline", "today", "right away", "cannot wait", "can't wait", "asap", "hurry", "quick",
+    "fast", "expedite", "rush", "pressing", "pressing", "imperative", "crucial", "vital",
+    "essential", "mandatory", "required", "must", "expires", "expiring", "last chance",
+    "final warning", "act now", "click now", "respond now", "confirm now", "verify now",
+    "update now", "pay now", "call now", "no delay", "without delay", "emergency",
+    "desperate", "immediately please", "at once"
+  ],
+  "churn": [
+    "cancel", "cancellation", "canceled", "cancelled", "unsubscribe", "leave", "switch",
+    "competitor", "competitors", "terminate", "close my account", "delete my account",
+    "moving to another", "take my business elsewhere", "never again", "never coming back",
+    "i am leaving", "im leaving", "ended my", "ending my", "drop my", "quit", "stop service",
+    "stopping service", "remove me", "refund and cancel", "discontinue", "abandon",
+    "give up", "switch to", "move my", "transfer to"
+  ],
+  "toxicity": [
+    "idiot", "idiots", "stupid", "garbage", "trash", "moron", "loser", "shut up", "screw you",
+    "damn", "hell", "frustrating", "hate", "hating", "annoying", "annoyed", "angry", "mad",
+    "ridiculous", "absurd", "pathetic", "useless", "worthless", "disgusting", "terrible",
+    "awful", "horrible", "awful", "worst", "crap", "rubbish", "nonsense", "bullshit",
+    "incompetent", "unprofessional", "rude", "sarcastic", "insulting", "offensive",
+    "unacceptable", "outrageous"
+  ],
+  "sarcasm": [
+    "great job", "fantastic", "wonderful", "stellar", "brilliant", "what a surprise",
+    "love that", "excellent work", "well done", "awesome service", "amazing service",
+    "top notch", "just perfect", "oh great", "oh wonderful", "that's just great"
+  ],
+  "negative": [
+    "bad", "terrible", "awful", "horrible", "unacceptable", "angry", "frustrated", "hate",
+    "failed", "failure", "broken", "worst", "disappointed", "ridiculous", "useless", "garbage"
+  ]
+}

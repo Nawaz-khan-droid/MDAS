@@ -10,3 +10,7 @@ services:
         value: "3.11"
       - key: PYTHONPATH
         value: "src"
+      - key: MDAS_V2
+        value: "true"
+      - key: MDAS_TIMEOUT
+        value: "30"

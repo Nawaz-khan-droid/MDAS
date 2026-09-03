@@ -1,0 +1,67 @@
+{
+  "model_name": "spam_v2",
+  "model_version": "2.0",
+  "type": "tfidf_linearsvc_margin_triage",
+  "domain": "generic+delivery",
+  "decision_function": "LinearSVC margin, triage when |margin|<=TRIAGE_MARGIN",
+  "triage_margin": 0.2,
+  "label_decoding": "1=spam, 0=ham",
+  "dataset": {
+    "sms_uci": {
+      "source": "UCI SMS Spam Collection (id 228)",
+      "samples": 5574,
+      "spam": 747,
+      "ham": 4827
+    },
+    "domain_augmentation": {
+      "source": "v2/domain_augmentation.py DOMAIN_PAIRS",
+      "samples": 125,
+      "spam": 17,
+      "ham": 108
+    },
+    "synthetic": {
+      "source": "v2/data/synthetic_diverse.tsv (v2/synthetic_data.py)",
+      "samples": 2000,
+      "spam": 1000,
+      "ham": 1000
+    },
+    "total": 7699,
+    "spam_ratio": 0.2291
+  },
+  "split": {
+    "ratio": "85/15 train/test stratified",
+    "training_samples": 6544,
+    "test_samples": 1155
+  },
+  "pipeline": {
+    "tfidf": {
+      "ngram_range": "(1,2)",
+      "max_features": 20000,
+      "sublinear_tf": true,
+      "stop_words": "english"
+    },
+    "classifier": {
+      "LinearSVC": {
+        "C": 1.0,
+        "class_weight": null,
+        "random_state": 42
+      }
+    },
+    "vocabulary_size": 20000
+  },
+  "metrics": {
+    "accuracy": 0.9887,
+    "precision_spam": 0.9846,
+    "recall_spam": 0.966,
+    "f1": 0.9752,
+    "precision_ham": 0.9899,
+    "recall_ham": 0.9955,
+    "hard_fp_ham_to_spam": 1,
+    "triaged": 13
+  },
+  "random_state": 42,
+  "sklearn_version": "1.9.0",
+  "trained_by": "v2/train_spam_v2.py",
+  "trained_at": "2026-09-02 13:32:38 UTC",
+  "model_sha256_prefix": "eddf0d6415596903"
+}

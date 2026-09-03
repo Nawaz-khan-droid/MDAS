@@ -1,7 +1,8 @@
 import os
 import time
 import uuid
-import traceback
+import logging
+import concurrent.futures
 from pathlib import Path
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -11,18 +12,47 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from jinja2_fragments.fastapi import Jinja2Blocks
 from pydantic import BaseModel
 from mdas.api.schemas import AnalysisRequest, AnalysisResponse, UnsupportedLanguageResponse
-from mdas.application.analysis_service import AnalysisService
+
+# ==========================================
+# LOGGING
+# ==========================================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("mdas")
+
+# ==========================================
+# TIMEOUT
+# ==========================================
+ANALYSIS_TIMEOUT_SECONDS = int(os.environ.get("MDAS_TIMEOUT", "30"))
+
+# ==========================================
+# ENGINE VERSION (feature flag)
+# ==========================================
+USE_V2 = os.environ.get("MDAS_V2", "false").lower() in {"1", "true", "yes"}
+logger.info("Engine version: V2=%s (MDAS_V2 env: %s)", USE_V2, os.environ.get("MDAS_V2", "unset"))
 
 # Initialize app state
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     try:
-        app.state.analyzer = AnalysisService(model_dir="models", allowed_tasks=["spam"])
-        print("MDAS AnalysisService loaded successfully in lifespan.")
+        if USE_V2:
+            from mdas.v2 import V2AnalysisService
+            app.state.analyzer = V2AnalysisService()
+            app.state.engine_version = "v2"
+            logger.info("MDAS V2 AnalysisService loaded successfully.")
+        else:
+            from mdas.application.analysis_service import AnalysisService
+            app.state.analyzer = AnalysisService(model_dir="models", allowed_tasks=["spam"])
+            app.state.engine_version = "v1"
+            logger.info("MDAS V1 AnalysisService loaded successfully.")
     except Exception as e:
-        print(f"Warning: Could not initialize AnalysisService on startup: {e}")
+        logger.exception("Failed to initialize AnalysisService on startup: %s", e)
         app.state.analyzer = None
+        app.state.engine_version = "failed"
         
     yield
     # Shutdown (cleanup if needed)
@@ -104,7 +134,8 @@ templates = Jinja2Blocks(directory=TEMPLATE_DIR)
 @app.get("/api/v1/mdas/health")
 def health_check():
     is_ready = hasattr(app.state, "analyzer") and app.state.analyzer is not None
-    return {"status": "online", "models_loaded": is_ready}
+    version = getattr(app.state, "engine_version", "unknown")
+    return {"status": "online", "engine": version, "models_loaded": is_ready}
 
 # ==========================================
 # REST API V1
@@ -118,17 +149,23 @@ def analyze_text_api(request: AnalysisRequest, req: Request):
     if not request.text.strip():
         return JSONResponse(status_code=400, content={"status": "error", "error": {"code": "BAD_REQUEST", "message": "Text cannot be empty."}})
         
+    analysis_id = str(uuid.uuid4())
     try:
-        result = req.app.state.analyzer.analyze(request.text, analysis_id=str(uuid.uuid4()))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(req.app.state.analyzer.analyze, request.text, analysis_id)
+            result = future.result(timeout=ANALYSIS_TIMEOUT_SECONDS)
         if isinstance(result, UnsupportedLanguageResponse):
             return JSONResponse(status_code=400, content=result.dict())
         return result
+    except concurrent.futures.TimeoutError:
+        logger.error("Analysis timed out after %ds for request %s", ANALYSIS_TIMEOUT_SECONDS, analysis_id)
+        return JSONResponse(status_code=504, content={"status": "error", "error": {"code": "TIMEOUT", "message": f"Analysis timed out after {ANALYSIS_TIMEOUT_SECONDS}s."}})
     except ValueError as ve:
         if "exceeds maximum allowed" in str(ve):
             return JSONResponse(status_code=413, content={"status": "error", "error": {"code": "PAYLOAD_TOO_LARGE", "message": str(ve)}})
         return JSONResponse(status_code=400, content={"status": "error", "error": {"code": "VALIDATION_FAILED", "message": str(ve)}})
     except Exception as e:
-        traceback.print_exc()
+        logger.exception("Analysis failed for request %s", analysis_id)
         return JSONResponse(status_code=500, content={"status": "error", "error": {"code": "ANALYSIS_FAILED", "message": "The text could not be analyzed."}})
 
 
@@ -158,7 +195,9 @@ def analyze_text_ui(request: Request, text: str = Form(...)):
         return templates.TemplateResponse("app.html", {"request": request, "error": "Text cannot be empty.", "text": text}, block_name="result")
         
     try:
-        result = request.app.state.analyzer.analyze(text, analysis_id=str(uuid.uuid4()))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(request.app.state.analyzer.analyze, text, str(uuid.uuid4()))
+            result = future.result(timeout=ANALYSIS_TIMEOUT_SECONDS)
         if isinstance(result, UnsupportedLanguageResponse):
             ctx = result.dict()
             ctx["request"] = request
@@ -170,10 +209,13 @@ def analyze_text_ui(request: Request, text: str = Form(...)):
         ctx["request"] = request
         ctx["text"] = text
         return templates.TemplateResponse("app.html", ctx, block_name="result")
+    except concurrent.futures.TimeoutError:
+        logger.error("UI analysis timed out after %ds", ANALYSIS_TIMEOUT_SECONDS)
+        return templates.TemplateResponse("app.html", {"request": request, "error": f"Analysis timed out after {ANALYSIS_TIMEOUT_SECONDS}s.", "text": text}, block_name="result")
     except ValueError as ve:
         return templates.TemplateResponse("app.html", {"request": request, "error": str(ve), "text": text}, block_name="result")
     except Exception as e:
-        traceback.print_exc()
+        logger.exception("UI analysis failed")
         return templates.TemplateResponse("app.html", {"request": request, "error": "The text could not be analyzed.", "text": text}, block_name="result")
 
 

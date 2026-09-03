@@ -2,7 +2,7 @@
 
 A text analysis API that runs on Render's free tier. No API keys, no paid services.
 
-It does clause-level voice analysis, aspect-based sentiment, spam detection, and a handful of radar signals (toxicity, urgency, churn, sarcasm). English only. 5,000 character limit. 512 MB of RAM to work with.
+Clause-level voice analysis, aspect-based sentiment, spam detection, and radar signals (toxicity, urgency, churn, sarcasm). English only. 5,000 character limit. 512 MB of RAM to work with.
 
 **Live:** `https://mdas-0x3n.onrender.com`
 
@@ -24,7 +24,7 @@ Tests: `PYTHONPATH=src pytest tests/`
 
 ## Two engines, same API
 
-There's a V1 and a V2 engine. You pick which one runs with the `MDAS_V2` environment variable. Same API contract, same endpoints — V2 just swaps in better spam detection, ABSA patterns, and radar signals. Voice and sentiment stay the same across both.
+There's a V1 and a V2 engine. Set `MDAS_V2=true` to use V2. Same API, same endpoints. V2 swaps in better spam detection, ABSA patterns, and radar signals. Voice and sentiment are shared between both.
 
 | | V1 | V2 |
 |---|---|---|
@@ -34,19 +34,21 @@ There's a V1 and a V2 engine. You pick which one runs with the `MDAS_V2` environ
 | **Voice** | Dependency rules | Same |
 | **Sentiment** | VADER | Same |
 
-V2 builds on top of V1. It's not a rewrite — it's an improvement. You run one or the other, not both.
+V2 builds on V1. It's not a rewrite, it's an improvement.
 
-## What actually works and what doesn't
+## What works and what doesn't
 
-I'll be straightforward about this.
+**Spam detection** is the strongest part of the system. 98.9% on held-out test data, 98.3% on a domain-specific benchmark. It uses margin-based triage, so when the model isn't sure it says "needs human review" instead of guessing wrong. Fewer false positives, uncertain cases get flagged.
 
-**Spam detection** is solid. 98.9% on held-out test data, 98.3% on a domain-specific benchmark. It uses margin-based triage — when the model isn't sure, it says "needs human review" instead of guessing wrong. That's the whole point of V2's spam: fewer false positives, and the uncertain cases get flagged instead of misclassified.
+**Voice analysis** is solid. It's rule-based on dependency parsing, which means it transfers to unseen text. 7/8 on independent test sentences. Structural rules generalize better than word lists.
 
-**Voice analysis** works well. It's rule-based on dependency parsing, so it transfers to unseen text. 7/8 on independent test sentences. The rules are structural, not word-based, which is why they generalize.
+**ABSA and radar** score well on the test sets I built them against (10/11 for ABSA, improved radar coverage). But on truly independent text they haven't seen during development, ABSA got 1/12 right. The radar improvements were built by adding words to catch specific test cases, which is coverage, not generalization. If you need these to work on arbitrary new phrasing, you'd want a trained model instead of hand-tuned patterns. The current versions are useful for known patterns but won't cover everything.
 
-**ABSA and radar** are where I have to be honest. They score well on the test sets I built them against — 10/11 for ABSA, improved coverage on radar signals. But when I tested them on truly independent text (phrasings they hadn't seen during development), ABSA got 1 out of 12 right. The radar improvements are real but they're fit-to-sample: I added words to the lexicon to catch specific test cases. That's coverage, not generalization. If you need ABSA or radar that works on arbitrary new phrasing, you'd need a trained model or an LLM, not hand-tuned patterns.
+**Sarcasm** is heuristic-only, 0/1 in both versions. It's there for completeness, not reliability.
 
-**Sarcasm** is heuristic-only. It's been 0/1 in both versions. Don't rely on it.
+## The training data question
+
+The training data in `v2-training-data/` is just for reference. The app doesn't load it at runtime. Only the trained model artifact (`spam_v2.joblib`, 932 KB) gets loaded into memory.
 
 ## API
 
@@ -76,13 +78,13 @@ POST /api/v1/mdas/analyze
 }
 ```
 
-Returns voice, sentiment, radar, spam, ABSA, entities, and text statistics. Full response shape is in the code — `src/mdas/api/schemas.py`.
+Returns voice, sentiment, radar, spam, ABSA, entities, and text statistics. Full response shape is in `src/mdas/api/schemas.py`.
 
 ### Errors
 
 | Status | What happened |
 |--------|---------------|
-| 400 | Bad input — empty text, wrong language, validation failure |
+| 400 | Bad input (empty text, wrong language, validation failure) |
 | 413 | Text too long (over 5,000 characters) |
 | 429 | Rate limited (30 requests per minute per IP) |
 | 500 | Something broke on our end |
@@ -107,15 +109,23 @@ src/mdas/
     └── models/           Trained model + metadata
 ```
 
-Training data lives in `v2-training-data/` — just for reference and reproducibility. The app doesn't load those files at runtime.
+## Memory
+
+The whole app runs on Render's free tier (512 MB). Here's where the memory goes:
+
+- **spaCy**: ~263 MB (the big one, needed for voice and entities)
+- **sklearn runtime**: ~110 MB (needed for spam classification)
+- **Everything else**: ~83 MB (FastAPI, VADER, V2 modules, headroom)
+
+Peak usage is about 456 MB, which leaves 56 MB of headroom. It works, but it's tight. The 5,000 character limit exists for the same reason.
 
 ## Constraints
 
-The app runs on Render's free tier. That means 512 MB of RAM total — OS, Python, spaCy, the model, everything. Peak usage is around 456 MB, which leaves about 56 MB of headroom. It works, but it's tight. Concurrent requests could push it over.
-
-The 5,000 character limit is there for the same reason. Longer text means more spaCy parsing, more memory, more time. 5K is the safe ceiling.
-
-No authentication. Rate limiting (30/min per IP) is the only protection. English only — other languages get rejected immediately.
+- 512 MB RAM total (OS + Python + spaCy + models + app)
+- 5,000 character input limit
+- English only
+- No authentication (rate limiting only)
+- Single concurrent request recommended
 
 ## Environment variables
 
@@ -125,7 +135,7 @@ No authentication. Rate limiting (30/min per IP) is the only protection. English
 | `MDAS_TIMEOUT` | Request timeout in seconds. Default: `30` |
 | `PYTHONPATH` | Set to `src` for module resolution |
 
-To roll back to V1 on Render: set `MDAS_V2=false` in the dashboard. No code change needed.
+Rollback to V1: set `MDAS_V2=false` in Render's dashboard. No code change needed.
 
 ## Security
 
